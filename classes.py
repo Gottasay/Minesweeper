@@ -34,7 +34,8 @@ class Game:
         self.record = 0
         self.running = True
         self.mine_places = set()
-
+        self.is_new = True
+        
     def __mine_neighbours(self, x, y):
         neighbours = [(x-1, y-1), (x-1, y), (x-1, y+1), (x, y-1),
                       (x, y+1), (x+1, y-1), (x+1, y), (x+1, y+1)]
@@ -83,8 +84,10 @@ class Game:
                 s.screen.blit(mini_bomb, opened_cell_cords[:2])
         elif self.game_field.field[x][y].has_flag:
             flag = pg.image.load('assets/flag.png').convert_alpha()
-            mini_flag = pg.transform.scale(flag, (s.cell_size, s.cell_size))
+            mini_flag = pg.transform.scale(flag, (int(s.cell_size * 0.95), s.cell_size))
             s.screen.blit(mini_flag, opened_cell_cords[:2])
+        else:
+            pg.draw.rect(s.screen, s.colors['frame'], opened_cell_cords)
         text = number_font.render(cell_value, True, s.colors['text'])
         text_rect = text.get_rect(center=(cell_x + s.cell_size // 2, cell_y + s.cell_size // 2))
         s.screen.blit(text, text_rect)
@@ -132,15 +135,15 @@ class Game:
         self.flags = self.game_field.mines
         self.opened_cells = 0
         self.mine_places.clear()
+        self.is_new = True
 
-    def show_mines(self, delay_ms=50, pause_ms=800):
-        delay_ms *= (9 / self.dif[0]) ** 2
+    def show_mines(self, delay_ms=100, pause_ms=800):
         for i, j in self.mine_places:
             if not self.game_field.field[i][j].has_flag:
                 self.game_field.field[i][j].is_opened = True
                 self.__draw_cell(i, j)
                 pg.mixer.Sound('sounds/fart.wav').play()
                 pg.display.update()
-                pg.time.delay(int(delay_ms))
+                pg.time.delay(delay_ms)
                 pg.event.pump()
         pg.time.delay(pause_ms)

@@ -180,6 +180,7 @@ def stop_game(game, type=0):
                     return
                 elif type == 2 and button_3_cords[0] <= mouse[0] <= button_3_cords[0] + button_3_cords[2] and button_3_cords[1] <= mouse[1] <= button_3_cords[1] + button_3_cords[3]:
                     pg.mixer.Sound('sounds/button.wav').play()
+                    game.is_new = True
                     return
         pg.display.update()
         
@@ -206,6 +207,7 @@ def main():
     flag_cords = (clue_cords[0], bomb_cords[1] + s.big_font_size)
     cur_record_cords = [s.window[0] * 1.20, s.window[1] // 4]
     best_record_cords = [s.window[0] + s.window[2] - cur_record_cords[0], cur_record_cords[1]]
+    flag_amount_cords = [flag_cords[0] + s.big_font_size, flag_cords[1]]
     
     button_size = s.window[2] // 8
     stop_button_cords = [s.width - button_size - 15, 15, button_size, button_size]
@@ -222,28 +224,29 @@ def main():
     
     available_side = min(s.window[2], s.window[3])
     s.cell_size = max(1, (available_side - s.line_width * (game.game_field.size - 1)) // game.game_field.size)
-    
     while game.running:
-        screen.fill(SCREEN_COLOR)
         
-        pg.draw.rect(screen, FRAME_COLOR, s.window)
-        pg.draw.rect(screen, button_color, stop_button_cords, border_radius=10)
-        pg.draw.rect(screen, tuple(map(lambda x: x - 30, button_color)), stop_button_cords, width=3, border_radius=10)
 
         cur, best = f'Record - {game.record}', f'Best - 0'
-        
-        draw_lines(screen, game.game_field.size, s.cell_size)
-        s.screen.blit(mini_pause, stop_button_cords[:2])
-        s.screen.blit(clue_font.render(clues[0], True, s.colors['text']), clue_cords)
-        s.screen.blit(clue_font.render(clues[1], True, s.colors['text']), [clue_cords[0], clue_cords[1] + s.mini_font_size * 2])
-        s.screen.blit(clue_font.render(clues[2], True, s.colors['text']), [clue_cords[0], clue_cords[1] + s.mini_font_size * 4])
-        s.screen.blit(record_font.render(cur, True, s.colors['text']), cur_record_cords)
-        s.screen.blit(record_font.render(best, True, s.colors['text']), best_record_cords)
-        s.screen.blit(mini_bomb, bomb_cords)
-        s.screen.blit(mini_flag, flag_cords)
-        s.screen.blit(info_font.render(f' - {game.game_field.mines}', True, s.colors['text']), [bomb_cords[0] + s.big_font_size, bomb_cords[1]])
-        s.screen.blit(info_font.render(f' - {game.flags}', True, s.colors['text']), [flag_cords[0] + s.big_font_size, flag_cords[1]])
-        
+        pg.draw.rect(screen, s.colors['screen'], [*flag_amount_cords, s.big_font_size * 1.75, s.big_font_size])
+        s.screen.blit(info_font.render(f' - {game.flags}', True, s.colors['text']), flag_amount_cords)
+        if game.is_new:
+            screen.fill(SCREEN_COLOR)
+            pg.draw.rect(screen, FRAME_COLOR, s.window)
+            pg.draw.rect(screen, button_color, stop_button_cords, border_radius=10)
+            pg.draw.rect(screen, tuple(map(lambda x: x - 30, button_color)), stop_button_cords, width=3, border_radius=10)
+            draw_lines(screen, game.game_field.size, s.cell_size)
+            s.screen.blit(mini_pause, stop_button_cords[:2])
+            s.screen.blit(clue_font.render(clues[0], True, s.colors['text']), clue_cords)
+            s.screen.blit(clue_font.render(clues[1], True, s.colors['text']), [clue_cords[0], clue_cords[1] + s.mini_font_size * 2])
+            s.screen.blit(clue_font.render(clues[2], True, s.colors['text']), [clue_cords[0], clue_cords[1] + s.mini_font_size * 4])
+            s.screen.blit(record_font.render(cur, True, s.colors['text']), cur_record_cords)
+            s.screen.blit(record_font.render(best, True, s.colors['text']), best_record_cords)
+            s.screen.blit(mini_bomb, bomb_cords)
+            s.screen.blit(mini_flag, flag_cords)
+            s.screen.blit(info_font.render(f' - {game.game_field.mines}', True, s.colors['text']), [bomb_cords[0] + s.big_font_size, bomb_cords[1]])
+            game.draw_field()
+            game.is_new = False
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
@@ -287,7 +290,6 @@ def main():
                       stop_button_cords[1] <= mouse[1] <= stop_button_cords[1] + stop_button_cords[3]):
                     pg.mixer.Sound('sounds/pause.wav').play()
                     stop_game(game, 2)
-        game.draw_field()
         pg.display.update()
                             
 if __name__ == '__main__':

@@ -45,10 +45,13 @@ def choose_dificulty():
                     pg.quit()
             if event.type == pg.MOUSEBUTTONDOWN:
                 if DISTANCE <= mouse[0] <= DISTANCE + BUTTON_WIDTH and OFFSET_Y <= mouse[1] <= OFFSET_Y + HEIGHT // 6:
+                    pg.mixer.Sound('sounds/button.wav').play()
                     return (9, 10)
                 if DISTANCE * 2 + BUTTON_WIDTH <= mouse[0] <= DISTANCE * 2 + BUTTON_WIDTH * 2 and OFFSET_Y <= mouse[1] <= OFFSET_Y + HEIGHT // 6:
+                    pg.mixer.Sound('sounds/button.wav').play()
                     return (16, 35)
                 if DISTANCE * 3 + BUTTON_WIDTH * 2 <= mouse[0] <= DISTANCE * 3 + BUTTON_WIDTH * 3 and OFFSET_Y <= mouse[1] <= OFFSET_Y + HEIGHT // 6:
+                    pg.mixer.Sound('sounds/button.wav').play()
                     return (20, 80)
         
         pg.display.update()
@@ -86,6 +89,7 @@ def main_menu():
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if (play_button_cords[0] <= mouse[0] <= play_button_cords[0] + play_button_cords[2] and
                 play_button_cords[1] <= mouse[1] <= play_button_cords[1] + play_button_cords[3]):
+                    pg.mixer.Sound('sounds/button.wav').play()
                     return choose_dificulty()
         pg.display.update()    
                     
@@ -107,27 +111,13 @@ def stop_game(game, type=0):
     record = f'Your record: {game.record}'
     record_msg = mess_font.render(record, True, s.colors['text'])
     while True:
+        game.draw_field()
         x, y, a, b = s.width // 4, s.height // 4, s.width // 2, s.height // 1.8
         rect_cords = [x, y, a, b]
         button_1_cords = [x + a // 10, y + int(b * 23/30), a // 5, b // 5]
         button_2_cords = [x + int(a * 7/10), button_1_cords[1], a // 5, b // 5]
         rect_color = s.colors['screen']
         button_color = tuple(map(lambda x: x - 30, s.colors['screen']))
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                pg.quit()
-                game.running = False
-            elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                    game.running = False
-            elif event.type == pg.MOUSEBUTTONDOWN:
-                mouse = event.pos
-                if button_1_cords[0] <= mouse[0] <= button_1_cords[0] + button_1_cords[2] and button_1_cords[1] <= mouse[1] <= button_1_cords[1] + button_1_cords[3]:
-                    main()
-                elif button_2_cords[0] <= mouse[0] <= button_2_cords[0] + button_2_cords[2] and button_2_cords[1] <= mouse[1] <= button_2_cords[1] + button_2_cords[3]:
-                    game.reset()
-                    return
         pg.draw.rect(s.screen, rect_color, rect_cords)
         pg.draw.rect(s.screen, button_color, rect_cords, width=5)
         pg.draw.rect(s.screen, button_color, button_1_cords)
@@ -143,7 +133,7 @@ def stop_game(game, type=0):
             picture = 'assets/cat.png'
             pic = pg.image.load(picture).convert_alpha()
             mini_pic = pg.transform.scale(pic, (a // 2, b // 2))
-            s.screen.blit(mini_pic, (x + a // 4, y + b // 4))      
+            s.screen.blit(mini_pic, (x + a // 4, y + b // 4))    
         elif type == 1:
             arrow = 'assets/next.png'
             picture = 'assets/simpson.jpg'
@@ -151,6 +141,13 @@ def stop_game(game, type=0):
             mini_pic = pg.transform.scale(pic, (a // 2, b // 2))
             s.screen.blit(mini_pic, (x + a // 4, y + b // 4))
         else:
+            button_3_cords = [(button_1_cords[0] + button_2_cords[0]) // 2, button_1_cords[1], a // 5, b // 5]
+            pg.draw.rect(s.screen, button_color, button_3_cords)
+            pg.draw.rect(s.screen, tuple(map(lambda x: x - 30, button_color)), button_3_cords, width=3)
+            cont = 'assets/continue.png'
+            cont_pic = pg.image.load(cont).convert_alpha()
+            mini_cont = pg.transform.scale(cont_pic, (int(button_3_cords[2] * 0.8), int(button_3_cords[3] * 0.8)))
+            s.screen.blit(mini_cont, (button_3_cords[0] + button_3_cords[2] // 10, button_3_cords[1] + button_3_cords[3] // 10))
             arrow = 'assets/retry.png'
         sign = pg.image.load(arrow).convert_alpha()
         mini_sign = pg.transform.scale(sign, button_2_cords[2:])
@@ -164,11 +161,32 @@ def stop_game(game, type=0):
         s.screen.blit(msg, msg_rect)
         if type != 2:
             s.screen.blit(record_msg, record_rect)
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                game.running = False
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    pg.quit()
+                    game.running = False
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mouse = event.pos
+                if button_1_cords[0] <= mouse[0] <= button_1_cords[0] + button_1_cords[2] and button_1_cords[1] <= mouse[1] <= button_1_cords[1] + button_1_cords[3]:
+                    pg.mixer.Sound('sounds/button.wav').play()
+                    main()
+                elif button_2_cords[0] <= mouse[0] <= button_2_cords[0] + button_2_cords[2] and button_2_cords[1] <= mouse[1] <= button_2_cords[1] + button_2_cords[3]:
+                    pg.mixer.Sound('sounds/button.wav').play()
+                    game.reset()
+                    return
+                elif type == 2 and button_3_cords[0] <= mouse[0] <= button_3_cords[0] + button_3_cords[2] and button_3_cords[1] <= mouse[1] <= button_3_cords[1] + button_3_cords[3]:
+                    pg.mixer.Sound('sounds/button.wav').play()
+                    return
         pg.display.update()
         
 def main():
     pg.init()
     pg.font.init()
+    pg.mixer.init()
     
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     s.screen = screen
@@ -194,7 +212,6 @@ def main():
     button_color = tuple(map(lambda x: x - 30, s.colors['screen']))
     
     clues = ['LMB - open', 'RMB - put/remove', 'flag']
-    cur, best = f'Record - {game.record}', f'Best - 0'
     bomb = pg.image.load('assets/bomb.png').convert_alpha()
     flag = pg.image.load('assets/flag.png').convert_alpha()
     pause = pg.image.load('assets/pause.png').convert_alpha()
@@ -213,6 +230,8 @@ def main():
         pg.draw.rect(screen, button_color, stop_button_cords, border_radius=10)
         pg.draw.rect(screen, tuple(map(lambda x: x - 30, button_color)), stop_button_cords, width=3, border_radius=10)
 
+        cur, best = f'Record - {game.record}', f'Best - 0'
+        
         draw_lines(screen, game.game_field.size, s.cell_size)
         s.screen.blit(mini_pause, stop_button_cords[:2])
         s.screen.blit(clue_font.render(clues[0], True, s.colors['text']), clue_cords)
@@ -250,11 +269,14 @@ def main():
                             new_cell = game.open_cell(cell_x, cell_y)
                             if new_cell.value == -1:
                                 game.show_mines()
+                                pg.mixer.Sound('sounds/cat.wav').play()
                                 stop_game(game)
                             elif game.opened_cells == game.game_field.size ** 2 - game.game_field.mines:
                                 game.record += 1
+                                pg.mixer.Sound('sounds/victory.wav').play()
                                 stop_game(game, 1)
-
+                            else:
+                                pg.mixer.Sound('sounds/button.wav').play()
                     elif event.button == 3:
                         if not game.game_field.field[cell_x][cell_y].has_flag:
                             if game.flags > 0:
@@ -263,6 +285,7 @@ def main():
                             game.remove_flag(cell_x, cell_y)
                 elif (stop_button_cords[0] <= mouse[0] <= stop_button_cords[0] + stop_button_cords[2] and
                       stop_button_cords[1] <= mouse[1] <= stop_button_cords[1] + stop_button_cords[3]):
+                    pg.mixer.Sound('sounds/pause.wav').play()
                     stop_game(game, 2)
         game.draw_field()
         pg.display.update()

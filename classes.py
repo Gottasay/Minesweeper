@@ -119,11 +119,13 @@ class Game:
         self.game_field.field[x][y].has_flag = True
         self.__draw_cell(x, y)
         self.flags -= 1
+        pg.mixer.Sound('sounds/eagle.wav').play()
 
     def remove_flag(self, x, y):
         self.game_field.field[x][y].has_flag = False
         self.__draw_cell(x, y)
         self.flags += 1
+        pg.mixer.Sound('sounds/boom.wav').play()
 
     def reset(self):
         self.game_field = Field(*self.dif)
@@ -131,12 +133,13 @@ class Game:
         self.opened_cells = 0
         self.mine_places.clear()
 
-    def show_mines(self, delay_ms=100, pause_ms=800):
+    def show_mines(self, delay_ms=50, pause_ms=800):
         delay_ms *= (9 / self.dif[0]) ** 2
         for i, j in self.mine_places:
             if not self.game_field.field[i][j].has_flag:
                 self.game_field.field[i][j].is_opened = True
-                self.draw_field()
+                self.__draw_cell(i, j)
+                pg.mixer.Sound('sounds/fart.wav').play()
                 pg.display.update()
                 pg.time.delay(int(delay_ms))
                 pg.event.pump()

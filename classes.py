@@ -147,3 +147,16 @@ class Game:
                 pg.time.delay(delay_ms)
                 pg.event.pump()
         pg.time.delay(pause_ms)
+
+    def get_best_result(self):
+        try:
+            with open('best_result', 'r') as best:
+                return int(best.readline())
+        except FileNotFoundError:
+            with open('best_result', 'w') as best:
+                best.write('0')
+                return 0
+            
+    def change_result(self):
+        with open('best_result', 'w') as best:
+            best.write(f'{self.record}')

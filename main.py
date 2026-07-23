@@ -2,6 +2,8 @@ from classes import Game, Field
 from exceptions import *
 from settings import Settings as s
 import pygame as pg
+from draw_schemas import Button
+
 
 WIDTH = s.width
 HEIGHT = s.height
@@ -110,6 +112,7 @@ def stop_game(game, type=0):
     msg = mess_font.render(end[type]['message'], True, s.colors['text'])
     record = f'Your record: {game.record}'
     record_msg = mess_font.render(record, True, s.colors['text'])
+    sound_flag = True
     while True:
         game.draw_field()
         x, y, a, b = s.width // 4, s.height // 4, s.width // 2, s.height // 1.8
@@ -128,6 +131,9 @@ def stop_game(game, type=0):
         mini_home = pg.transform.scale(home, button_1_cords[2:])
         s.screen.blit(mini_home, button_1_cords[:2])
         if type == 0:
+            if sound_flag:
+                pg.mixer.Sound('sounds/cat.wav').play()
+                sound_flag = False
             game.record = 0
             arrow = 'assets/retry.png'
             picture = 'assets/cat.png'
@@ -135,8 +141,11 @@ def stop_game(game, type=0):
             mini_pic = pg.transform.scale(pic, (a // 2, b // 2))
             s.screen.blit(mini_pic, (x + a // 4, y + b // 4))    
         elif type == 1:
+            if sound_flag:
+                pg.mixer.Sound('sounds/victory.wav').play()
+                sound_flag = False
             arrow = 'assets/next.png'
-            picture = 'assets/simpson.jpg'
+            picture = 'assets/omniman.jpg'
             pic = pg.image.load(picture).convert_alpha()
             mini_pic = pg.transform.scale(pic, (a // 2, b // 2))
             s.screen.blit(mini_pic, (x + a // 4, y + b // 4))
@@ -227,10 +236,13 @@ def main():
     while game.running:
         
 
-        cur, best = f'Record - {game.record}', f'Best - 0'
+        cur = f'Record - {game.record}'
         pg.draw.rect(screen, s.colors['screen'], [*flag_amount_cords, s.big_font_size * 1.75, s.big_font_size])
         s.screen.blit(info_font.render(f' - {game.flags}', True, s.colors['text']), flag_amount_cords)
         if game.is_new:
+            best = game.get_best_result()
+            best_msg = f'Best - {best}'
+            
             screen.fill(SCREEN_COLOR)
             pg.draw.rect(screen, FRAME_COLOR, s.window)
             pg.draw.rect(screen, button_color, stop_button_cords, border_radius=10)
@@ -241,7 +253,7 @@ def main():
             s.screen.blit(clue_font.render(clues[1], True, s.colors['text']), [clue_cords[0], clue_cords[1] + s.mini_font_size * 2])
             s.screen.blit(clue_font.render(clues[2], True, s.colors['text']), [clue_cords[0], clue_cords[1] + s.mini_font_size * 4])
             s.screen.blit(record_font.render(cur, True, s.colors['text']), cur_record_cords)
-            s.screen.blit(record_font.render(best, True, s.colors['text']), best_record_cords)
+            s.screen.blit(record_font.render(best_msg, True, s.colors['text']), best_record_cords)
             s.screen.blit(mini_bomb, bomb_cords)
             s.screen.blit(mini_flag, flag_cords)
             s.screen.blit(info_font.render(f' - {game.game_field.mines}', True, s.colors['text']), [bomb_cords[0] + s.big_font_size, bomb_cords[1]])
@@ -272,11 +284,11 @@ def main():
                             new_cell = game.open_cell(cell_x, cell_y)
                             if new_cell.value == -1:
                                 game.show_mines()
-                                pg.mixer.Sound('sounds/cat.wav').play()
                                 stop_game(game)
                             elif game.opened_cells == game.game_field.size ** 2 - game.game_field.mines:
                                 game.record += 1
-                                pg.mixer.Sound('sounds/victory.wav').play()
+                                if game.record > best:
+                                    game.change_result()
                                 stop_game(game, 1)
                             else:
                                 pg.mixer.Sound('sounds/button.wav').play()

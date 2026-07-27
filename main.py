@@ -197,7 +197,10 @@ def stop_game(game, type=0):
                     game.is_new = True
                     return
         pg.display.update()
-        
+
+def sound_control():
+    pass
+   
 def main():
     pg.init()
     pg.font.init()

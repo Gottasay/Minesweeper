@@ -1,3 +1,7 @@
+from pygame import mixer
+from pygame.mixer import Sound
+
+mixer.init()
 class Settings:
     width = 800
     height = 600
@@ -12,3 +16,16 @@ class Settings:
     window_side = width * 2 // 3 * 0.9
     window_x, window_y = (width - window_side) // 2, (height - window_side) // 2
     window = [window_x, window_y, window_side, window_side]
+
+class SFX:
+    sound_volume = 1.0
+    music_volume = 1.0
+    all_sounds = {
+       'boom': Sound('sounds/boom.wav'),
+       'button': Sound('sounds/button.wav'),
+       'cat': Sound('sounds/cat.wav'),
+       'eagle': Sound('sounds/eagle.wav'),
+       'fart': Sound('sounds/fart.wav'),
+       'pause': Sound('sounds/pause.wav'),
+       'victory': Sound('sounds/victory.wav') 
+    }

@@ -1,8 +1,9 @@
 from classes import Game, Field
 from exceptions import *
 from settings import Settings as s
+from settings import SFX as sfx
 import pygame as pg
-from draw_schemas import draw_text_button, is_button_pressed, draw_picture_button
+from draw_schemas import draw_text_button, is_button_pressed, draw_picture_button, draw_sfx, draw_sfx_lines
 
 clue_cords = [s.window[0] // 12, s.window[1] * 1.5]
 bomb_cords = (clue_cords[0], s.height // 2.25)
@@ -57,7 +58,7 @@ def choose_dificulty():
             if event.type == pg.MOUSEBUTTONDOWN:
                 for but in range(3):
                     if is_button_pressed(mouse, button_cords[but]):
-                        pg.mixer.Sound('sounds/button.wav').play()
+                        sfx.all_sounds['button'].play()
                         return params[but]
         
         pg.display.update()
@@ -97,7 +98,7 @@ def main_menu():
                     pg.quit()
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if is_button_pressed(mouse, play_button_cords):
-                    pg.mixer.Sound('sounds/button.wav').play()
+                    sfx.all_sounds['button'].play()
                     return choose_dificulty()
         pg.display.update()    
                     
@@ -111,6 +112,16 @@ def draw_lines(screen, size, cell_size):
         pg.draw.line(screen, s.colors['line'], (x, top), (x, top + height), s.line_width)
         pg.draw.line(screen, s.colors['line'], (left, y), (left + width, y), s.line_width)
 
+def change_volume(state, s_cords, m_cords, rect):
+    mouse = pg.mouse.get_pos()
+    if state and s_cords[0][0] <= mouse[0] <= s_cords[1][0] and s_cords[0][1] - 10 <= mouse[1] <= s_cords[0][1] + 10:
+        sfx.sound_volume = (mouse[0] - s_cords[0][0]) / (s_cords[1][0] - s_cords[0][0])
+        sound_set(sfx.sound_volume)
+    elif state and m_cords[0][0] <= mouse[0] <= m_cords[1][0] and m_cords[0][1] - 10 <= mouse[1] <= m_cords[0][1] + 10:
+        sfx.music_volume = (mouse[0] - m_cords[0][0]) / (m_cords[1][0] - m_cords[0][0])
+        pg.mixer.music.set_volume(sfx.music_volume)
+    draw_sfx_lines(rect, sfx.sound_volume, sfx.music_volume)
+    
 
 def stop_game(game, type=0):
     new_call = True
@@ -159,11 +170,11 @@ def stop_game(game, type=0):
                 line_color=tuple(map(lambda x: x - 30, button_color))
                 )
             if type == 0:
-                pg.mixer.Sound('sounds/cat.wav').play()
+                sfx.all_sounds['cat'].play()
                 game.record = 0
                 s.screen.blit(record_msg, record_rect)
             elif type == 1:
-                pg.mixer.Sound('sounds/victory.wav').play()
+                sfx.all_sounds['victory'].play()
                 s.screen.blit(record_msg, record_rect)
             else:
                 continue_pic = pg.transform.scale(pg.image.load(pref + end[type]['button_set'][2]).convert_alpha(), button_2_cords[2:])
@@ -173,8 +184,11 @@ def stop_game(game, type=0):
                     picture=continue_pic, width=5,
                     line_color=tuple(map(lambda x: x - 30, button_color))
                     )
+                s1, s2, m1, m2 = draw_sfx(rect_cords)
             if main_pic:
                 s.screen.blit(main_pic, main_pic_cords[:2])
+        
+        mouse_button = pg.mouse.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
@@ -186,20 +200,23 @@ def stop_game(game, type=0):
             elif event.type == pg.MOUSEBUTTONDOWN:
                 mouse = event.pos
                 if is_button_pressed(mouse, button_1_cords):
-                    pg.mixer.Sound('sounds/button.wav').play()
+                    sfx.all_sounds['button'].play()
                     main()
                 elif is_button_pressed(mouse, button_2_cords):
-                    pg.mixer.Sound('sounds/button.wav').play()
+                    sfx.all_sounds['button'].play()
                     game.reset()
                     return
                 elif type == 2 and (is_button_pressed(mouse, button_3_cords) or is_button_pressed(mouse, stop_button_cords)):
-                    pg.mixer.Sound('sounds/button.wav').play()
+                    sfx.all_sounds['button'].play()
                     game.is_new = True
                     return
+        if type == 2:
+            change_volume(mouse_button[0], (s1, s2), (m1, m2), rect_cords)
         pg.display.update()
 
-def sound_control():
-    pass
+def sound_set(value):
+    for sound in sfx.all_sounds.values():
+        sound.set_volume(value)
    
 def main():
     pg.init()
@@ -228,6 +245,10 @@ def main():
     info_font = pg.font.SysFont(s.font_name, s.font_size)
     record_font = pg.font.SysFont(s.font_name, s.font_size)
     
+    #pg.mixer.Sound.set_volume(s.sound_volume)
+    pg.mixer.music.set_volume(sfx.music_volume)
+    sound_set(sfx.sound_volume)
+    
     available_side = min(s.window[2], s.window[3])
     s.cell_size = max(1, (available_side - s.line_width * (game.game_field.size - 1)) // game.game_field.size)
     while game.running:
@@ -235,7 +256,7 @@ def main():
         pg.draw.rect(screen, s.colors['screen'], [*flag_amount_cords, s.big_font_size * 1.75, s.big_font_size])
         s.screen.blit(info_font.render(f' - {game.flags}', True, s.colors['text']), flag_amount_cords)
         if game.is_new:
-            pg.mixer.music.pause()
+            # pg.mixer.music.pause()
             best = game.get_best_result()
             best_msg = f'Best - {best}'
             
@@ -281,7 +302,7 @@ def main():
                             game.mine_generate(cell_x, cell_y)
                         elif not game.game_field.field[cell_x][cell_y].has_flag:
                             new_cell = game.open_cell(cell_x, cell_y)
-                            pg.mixer.Sound('sounds/button.wav').play()
+                            sfx.all_sounds['button'].play()
                             if new_cell.value == -1:
                                 game.show_mines()
                                 stop_game(game)
@@ -297,7 +318,7 @@ def main():
                         else:
                             game.remove_flag(cell_x, cell_y)
                 elif is_button_pressed(mouse, stop_button_cords):
-                    pg.mixer.Sound('sounds/pause.wav').play()
+                    sfx.all_sounds['pause'].play()
                     stop_game(game, 2)
         pg.display.update()
                             

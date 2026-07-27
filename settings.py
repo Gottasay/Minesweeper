@@ -29,3 +29,10 @@ class SFX:
        'pause': Sound('sounds/pause.wav'),
        'victory': Sound('sounds/victory.wav') 
     }
+    
+class MessageScreen:
+    rect = Settings.width // 4, Settings.height // 4, Settings.width // 2, Settings.height // 1.8
+    color = Settings.colors['screen'],
+    width = Settings.line_width
+    line_color = tuple(map(lambda x: x - 30, Settings.colors['screen']))
+    

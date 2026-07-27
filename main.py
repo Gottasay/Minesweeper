@@ -2,6 +2,7 @@ from classes import Game, Field
 from exceptions import *
 from settings import Settings as s
 from settings import SFX as sfx
+from settings import MessageScreen as m
 import pygame as pg
 from draw_schemas import draw_text_button, is_button_pressed, draw_picture_button, draw_sfx, draw_sfx_lines
 
@@ -17,7 +18,38 @@ stop_button_cords = [s.width - button_size - 15, 15, button_size, button_size]
 button_color = tuple(map(lambda x: x - 30, s.colors['screen']))
 
 clues = ['LMB - open', 'RMB - put/remove', 'flag']
-            
+
+def change_volume(state, s_cords, m_cords):
+    mouse = pg.mouse.get_pos()
+    if state and s_cords[0][0] <= mouse[0] <= s_cords[1][0] and s_cords[0][1] - 10 <= mouse[1] <= s_cords[0][1] + 10:
+        sfx.sound_volume = (mouse[0] - s_cords[0][0]) / (s_cords[1][0] - s_cords[0][0])
+        sound_set(sfx.sound_volume)
+    elif state and m_cords[0][0] <= mouse[0] <= m_cords[1][0] and m_cords[0][1] - 10 <= mouse[1] <= m_cords[0][1] + 10:
+        sfx.music_volume = (mouse[0] - m_cords[0][0]) / (m_cords[1][0] - m_cords[0][0])
+        pg.mixer.music.set_volume(sfx.music_volume)
+
+def game_parameters():
+    rect = s.width // 5, s.height // 4, s.width * 3 // 5, s.height // 1.8
+    while True:
+        mouse = pg.mouse.get_pos()
+        draw_text_button(
+            s.screen, m.color, rect,
+            border_radius=10, msg='Settings', msg_orient='top', width=5,
+            line_color=button_color
+            )
+        s1, s2, m1, m2 = draw_sfx()
+        change_volume(pg.mouse.get_pressed()[0], (s1, s2), (m1, m2))
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    pg.quit()
+            if event.type == pg.MOUSEBUTTONDOWN:
+                if is_button_pressed(mouse, stop_button_cords):
+                    return
+        pg.display.update()
+        
 def choose_dificulty():
     new_call = True
     button_color = tuple(map(lambda x: x - 50, s.colors['screen']))
@@ -80,6 +112,9 @@ def main_menu():
     
     pg.mixer.music.load('music/meatball.wav')
     pg.mixer.music.play(-1)
+    
+    settings = pg.transform.scale(pg.image.load('assets/settings.png').convert_alpha(), (button_size, button_size))
+    
     while True:
         s.screen.fill(s.colors['screen'])
         mouse = pg.mouse.get_pos()
@@ -89,6 +124,11 @@ def main_menu():
             s.screen, play_button_color, play_button_cords,
             border_radius=10, msg=play_msg, msg_size=play_size, msg_orient='top', width=2,
             line_color=tuple(map(lambda x: x - 30, play_button_color))
+                        )
+        draw_picture_button(
+            s.screen, button_color, stop_button_cords,
+            border_radius=10, picture=settings, width=3,
+            line_color=tuple(map(lambda x: x - 30, button_color))
                         )
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -100,6 +140,9 @@ def main_menu():
                 if is_button_pressed(mouse, play_button_cords):
                     sfx.all_sounds['button'].play()
                     return choose_dificulty()
+                elif is_button_pressed(mouse, stop_button_cords):
+                    game_parameters()
+                        
         pg.display.update()    
                     
 def draw_lines(screen, size, cell_size):
@@ -111,16 +154,6 @@ def draw_lines(screen, size, cell_size):
         y = top + i * (cell_size + s.line_width)
         pg.draw.line(screen, s.colors['line'], (x, top), (x, top + height), s.line_width)
         pg.draw.line(screen, s.colors['line'], (left, y), (left + width, y), s.line_width)
-
-def change_volume(state, s_cords, m_cords, rect):
-    mouse = pg.mouse.get_pos()
-    if state and s_cords[0][0] <= mouse[0] <= s_cords[1][0] and s_cords[0][1] - 10 <= mouse[1] <= s_cords[0][1] + 10:
-        sfx.sound_volume = (mouse[0] - s_cords[0][0]) / (s_cords[1][0] - s_cords[0][0])
-        sound_set(sfx.sound_volume)
-    elif state and m_cords[0][0] <= mouse[0] <= m_cords[1][0] and m_cords[0][1] - 10 <= mouse[1] <= m_cords[0][1] + 10:
-        sfx.music_volume = (mouse[0] - m_cords[0][0]) / (m_cords[1][0] - m_cords[0][0])
-        pg.mixer.music.set_volume(sfx.music_volume)
-    draw_sfx_lines(rect, sfx.sound_volume, sfx.music_volume)
     
 
 def stop_game(game, type=0):
@@ -134,7 +167,7 @@ def stop_game(game, type=0):
     mess_font = pg.font.SysFont(s.font_name, s.font_size)
     record_msg = mess_font.render(record, True, s.colors['text'])
     
-    x, y, a, b = s.width // 4, s.height // 4, s.width // 2, s.height // 1.8
+    x, y, a, b = m.rect
     rect_cords = [x, y, a, b]
     button_1_cords = [x + a // 10, y + int(b * 23/30), a // 5, b // 5]
     button_2_cords = [x + int(a * 7/10), button_1_cords[1], a // 5, b // 5]
@@ -143,7 +176,6 @@ def stop_game(game, type=0):
     center_y = y + b // 2
     record_rect = record_msg.get_rect(center=(center_x, center_y - s.font_size * 3.5))
     
-    rect_color = s.colors['screen']
     button_color = tuple(map(lambda x: x - 30, s.colors['screen']))
     
     pref = 'assets/'
@@ -155,7 +187,7 @@ def stop_game(game, type=0):
             game.draw_field()
             new_call = False    
             draw_text_button(
-                s.screen, rect_color, rect_cords,
+                s.screen, m.color, rect_cords,
                 border_radius=10, msg=end[type]['message'], msg_orient='top', width=5,
                 line_color=button_color
                 )
@@ -184,7 +216,7 @@ def stop_game(game, type=0):
                     picture=continue_pic, width=5,
                     line_color=tuple(map(lambda x: x - 30, button_color))
                     )
-                s1, s2, m1, m2 = draw_sfx(rect_cords)
+                s1, s2, m1, m2 = draw_sfx()
             if main_pic:
                 s.screen.blit(main_pic, main_pic_cords[:2])
         
@@ -211,7 +243,8 @@ def stop_game(game, type=0):
                     game.is_new = True
                     return
         if type == 2:
-            change_volume(mouse_button[0], (s1, s2), (m1, m2), rect_cords)
+            change_volume(mouse_button[0], (s1, s2), (m1, m2))
+            draw_sfx()
         pg.display.update()
 
 def sound_set(value):
@@ -245,7 +278,6 @@ def main():
     info_font = pg.font.SysFont(s.font_name, s.font_size)
     record_font = pg.font.SysFont(s.font_name, s.font_size)
     
-    #pg.mixer.Sound.set_volume(s.sound_volume)
     pg.mixer.music.set_volume(sfx.music_volume)
     sound_set(sfx.sound_volume)
     
@@ -256,7 +288,7 @@ def main():
         pg.draw.rect(screen, s.colors['screen'], [*flag_amount_cords, s.big_font_size * 1.75, s.big_font_size])
         s.screen.blit(info_font.render(f' - {game.flags}', True, s.colors['text']), flag_amount_cords)
         if game.is_new:
-            # pg.mixer.music.pause()
+            pg.mixer.music.pause()
             best = game.get_best_result()
             best_msg = f'Best - {best}'
             

@@ -17,23 +17,37 @@ def change_volume(state, s_cords, m_cords):
         sfx.music_volume = (mouse[0] - m_cords[0][0]) / (m_cords[1][0] - m_cords[0][0])
         pg.mixer.music.set_volume(sfx.music_volume)
 
-def screen_changed():
-    info = pg.display.Info()
-    cur_width = info.current_w
-    cur_height = info.current_h
-    if cur_width != s.width or cur_height != s.height:
-        toggle_fullscreen()
 
-def toggle_fullscreen():
+def screen_changed():
+    if s.screen is None:
+        return
+    cur_width, cur_height = s.screen.get_size()
+    if cur_width != s.width or cur_height != s.height:
+        s.width, s.height = cur_width, cur_height
+        s.font_scale(width=s.width, height=s.height)
+        p.button_size = s.height * 11 // 100
+        p.settings_cords = [s.width - p.button_size - 15, 15, p.button_size, p.button_size]
+        m_side = s.height // 1.8
+        w_rect, w_mini = s.height * 2 // 3, s.height * 4 // 5
+        m.rect = (s.width - w_rect) // 2, s.height // 4, w_rect, m_side
+        m.mini_rect = (s.width - w_mini) // 2, s.height // 4, w_mini, m_side
+
+
+def toggle_fullscreen(KF_11=False):
     if s.is_fulscreen:
         s.screen = pg.display.set_mode((s.prev_width, s.prev_height), pg.RESIZABLE)
-        s.width, s.height = s.prev_width, s.prev_height
+        s.width, s.height, s.prev_width, s.prev_height = s.prev_width, s.prev_height, s.width, s.height
+        s.font_scale(width=s.width, height=s.height)
         s.is_fulscreen = False
     else:
         s.prev_width, s.prev_height = s.width, s.height
         info = pg.display.Info()
         s.width, s.height = info.current_w, info.current_h
-        s.screen = pg.display.set_mode((s.width, s.height), pg.RESIZABLE)
+        if KF_11:
+            s.screen = pg.display.set_mode((s.width, s.height), pg.FULLSCREEN)
+        else:
+            s.screen = pg.display.set_mode((s.width, s.height), pg.RESIZABLE)
+        s.font_scale(width=s.width, height=s.height)
         s.is_fulscreen = True
     p.button_size = s.height * 11 // 100
     p.settings_cords = [s.width - p.button_size - 15, 15, p.button_size, p.button_size]
@@ -50,8 +64,8 @@ def game_parameters(redraw):
         mouse = pg.mouse.get_pos()
         draw_text_button(
             s.screen, m.color, m.mini_rect,
-            border_radius=10, msg='Settings', msg_orient='top', width=5,
-            line_color=p.button_color
+            border_radius=10, msg='Settings', msg_size=s.big_font_size,
+            msg_orient='top', width=5, line_color=p.button_color
             )
         s1, s2, m1, m2 = draw_sfx()
         change_volume(pg.mouse.get_pressed()[0], (s1, s2), (m1, m2))
@@ -62,26 +76,25 @@ def game_parameters(redraw):
                 if event.key == pg.K_ESCAPE:
                     pg.quit()
                 if event.key == pg.K_F11:
-                    toggle_fullscreen()
+                    toggle_fullscreen(KF_11=True)
             if event.type == pg.MOUSEBUTTONDOWN:
                 if is_button_pressed(mouse, p.settings_cords):
                     return
         pg.display.update()
         
 def choose_dificulty():
-    but_size, mess_size = 35, 50
-    mess_font = pg.font.SysFont(s.font_name, mess_size)
     choose_msg = 'Choose difficulty:'
-    message = mess_font.render(choose_msg, True , s.colors['text'])
     params = [(9, 10), (16, 35), (20, 80)]
     def redraw():
+        mess_font = pg.font.SysFont(s.font_name, s.big_font_size)
+        message = mess_font.render(choose_msg, True , s.colors['text'])
         settings_cords = [s.width - p.button_size - 15, 15, p.button_size, p.button_size]
         easy_cords = (s.width // 10, s.height * 2 // 3, s.width // 5, s.height // 6)
         medium_cords = (s.width // 10 * 2 + s.width // 5, s.height * 2 // 3, s.width // 5, s.height // 6)
         hard_cords = (s.width // 10 * 3 + s.width // 5 * 2, s.height * 2 // 3, s.width // 5, s.height // 6)
         settings = pg.transform.scale(pg.image.load('assets/settings.png').convert_alpha(), (p.button_size, p.button_size))
         s.screen.fill(s.colors['screen'])
-        s.screen.blit(message, ((s.width - len(choose_msg) * mess_size // 2) // 2, s.height // 3))
+        s.screen.blit(message, ((s.width - len(choose_msg) * s.big_font_size // 2) // 2, s.height // 3))
         draw_picture_button(
             s.screen, p.button_color, settings_cords,
             border_radius=10, picture=settings, width=3,
@@ -89,18 +102,18 @@ def choose_dificulty():
                         ) 
         draw_text_button(
             s.screen, p.button_color, easy_cords,
-            border_radius=10, msg='Easy', msg_size=but_size, width=2,
-            line_color=tuple(map(lambda x: x - 50, p.button_color))
+            border_radius=10, msg='Easy', msg_size=s.font_size, msg_orient='center',
+            width=2, line_color=tuple(map(lambda x: x - 50, p.button_color))
             )
         draw_text_button(
             s.screen, p.button_color, medium_cords,
-            border_radius=10, msg='Medium', msg_size=but_size, width=2,
-            line_color=tuple(map(lambda x: x - 50, p.button_color))
+            border_radius=10, msg='Medium', msg_size=s.font_size, msg_orient='center',
+            width=2,line_color=tuple(map(lambda x: x - 50, p.button_color))
             )
         draw_text_button(
             s.screen, p.button_color, hard_cords,
-            border_radius=10, msg='Hard', msg_size=but_size, width=2,
-            line_color=tuple(map(lambda x: x - 50, p.button_color))
+            border_radius=10, msg='Hard', msg_size=s.font_size, msg_orient='center',
+            width=2, line_color=tuple(map(lambda x: x - 50, p.button_color))
             )
         return easy_cords, medium_cords, hard_cords
     while True:
@@ -114,7 +127,7 @@ def choose_dificulty():
                 if event.key == pg.K_ESCAPE:
                     pg.quit()
                 if event.key == pg.K_F11:
-                    toggle_fullscreen()
+                    toggle_fullscreen(KF_11=True)
             if event.type == pg.MOUSEBUTTONDOWN:
                 if is_button_pressed(mouse, p.settings_cords):
                     game_parameters(redraw)
@@ -135,13 +148,12 @@ def main_menu():
     msg = 'Welcome to Minesweeper!'
     play_msg = 'Start'
     
-    msg_size, play_size = 50, 40
-    msg_font = pg.font.SysFont(s.font_name, msg_size)
     picture = pg.image.load('assets/main.jpg').convert_alpha()
     pg.mixer.music.load('music/meatball.wav')
     pg.mixer.music.play(-1)
     def redraw():
-        msg_cords = (s.width - len(msg) * msg_size // 2) // 2, s.height // 12
+        msg_font = pg.font.SysFont(s.font_name, s.big_font_size)
+        msg_cords = (s.width - len(msg) * s.big_font_size // 2) // 2, s.height // 12
         pb_width, pic_width = s.height * 2 // 3, s.height * 2 // 3
         play_button_cords = [(s.width - pb_width) // 2, s.height * 3 // 4, pb_width, s.height // 10]
         picture_cords = [(s.width - pic_width) // 2, s.height // 5, pic_width, s.height // 2]
@@ -152,7 +164,7 @@ def main_menu():
         s.screen.blit(mini_picture, picture_cords[:2])
         draw_text_button(
             s.screen, p.button_color, play_button_cords,
-            border_radius=10, msg=play_msg, msg_size=play_size, msg_orient='top', width=2,
+            border_radius=10, msg=play_msg, msg_size=s.font_size, msg_orient='center', width=2,
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         )
         draw_picture_button(
@@ -172,7 +184,8 @@ def main_menu():
                 if event.key == pg.K_ESCAPE:
                     pg.quit()
                 if event.key == pg.K_F11:
-                    toggle_fullscreen()
+                    s.screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
+                    toggle_fullscreen(KF_11=True)
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if is_button_pressed(mouse, play_button_cords):
                     sfx.all_sounds['button'].play()
@@ -190,8 +203,6 @@ def stop_game(game, redraw, type=0):
         2: {'message': 'Game paused!', 'main_pic': '', 'button_set': ('home.png', 'retry.png', 'continue.png')}}
     
     record = f'Your record: {game.record}'
-    mess_font = pg.font.SysFont(s.font_name, s.font_size)
-    record_msg = mess_font.render(record, True, s.colors['text'])
     first_call = True
     pref = 'assets/'
     while True:
@@ -205,6 +216,8 @@ def stop_game(game, redraw, type=0):
         main_pic_cords = [(a - pic_width) // 2 + x, y + b // 4, pic_width, pic_width]
         center_x = x + a // 2
         center_y = y + b // 2
+        mess_font = pg.font.SysFont(s.font_name, s.font_size)
+        record_msg = mess_font.render(record, True, s.colors['text'])
         record_rect = record_msg.get_rect(center=(center_x, center_y - s.font_size * 3.5))
         
         home_pic = pg.transform.scale(pg.image.load(pref + end[type]['button_set'][0]).convert_alpha(), button_1_cords[2:])
@@ -213,8 +226,8 @@ def stop_game(game, redraw, type=0):
             
         draw_text_button(
             s.screen, m.color, rect_cords,
-            border_radius=10, msg=end[type]['message'], msg_orient='top', width=5,
-            line_color=p.button_color
+            border_radius=10, msg=end[type]['message'], msg_size=s.font_size,
+            msg_orient='top', width=5, line_color=p.button_color
             )
         draw_picture_button(
             s.screen, p.button_color, button_1_cords,
@@ -259,7 +272,7 @@ def stop_game(game, redraw, type=0):
                     pg.quit()
                     game.running = False
                 if event.key == pg.K_F11:
-                    toggle_fullscreen()
+                    toggle_fullscreen(KF_11=True)
             elif event.type == pg.MOUSEBUTTONDOWN:
                 mouse = event.pos
                 if is_button_pressed(mouse, button_1_cords):
@@ -329,7 +342,7 @@ def main():
                     pg.quit()
                     game.running = False
                 if event.key == pg.K_F11:
-                    toggle_fullscreen()
+                    toggle_fullscreen(KF_11=True)
             elif event.type == pg.MOUSEBUTTONDOWN:
                 mouse = event.pos
                 cord_x, cord_y = mouse[0] - p.window[0], mouse[1] - p.window[1]

@@ -5,16 +5,30 @@ mixer.init()
 class Settings:
     width = 800
     height = 600
-    prev_width = 0
-    prev_height = 0
+    prev_width = width
+    prev_height = height
+    base_width = width
+    base_height = height
     is_fulscreen = False
     screen = None
     colors = {'line': (169, 143, 45), 'frame': (255, 231, 138), 'screen': (227, 213, 161), 'text': (132, 113, 42)}
     line_width = 4
-    font_size = 30
+    font_size = 32
     mini_font_size = 16
-    big_font_size = 50
+    big_font_size = 48
+    base_font_size = font_size
+    base_mini_font_size = mini_font_size
+    base_big_font_size = big_font_size
     font_name = 'comic sans'
+    
+    @classmethod
+    def font_scale(cls, width=None, height=None):
+        if width is None or height is None:
+            return
+        scale = height / cls.base_height
+        cls.font_size = max(1, int(cls.base_font_size * scale))
+        cls.mini_font_size = max(1, int(cls.base_mini_font_size * scale))
+        cls.big_font_size = max(1, int(cls.base_big_font_size * scale))
 
 class PlayWindow:
     window_side = Settings.width * 2 // 3

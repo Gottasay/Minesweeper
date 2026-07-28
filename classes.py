@@ -1,6 +1,7 @@
 from random import randint
 from settings import Settings as s
 from settings import SFX as sfx
+from settings import PlayWindow as p
 import pygame as pg
 
 
@@ -33,9 +34,9 @@ class Game:
         self.flags = self.game_field.mines
         self.opened_cells = 0
         self.record = 0
+        self.best_record = self.get_best_result()
         self.running = True
         self.mine_places = set()
-        self.is_new = True
         
     def __mine_neighbours(self, x, y):
         neighbours = [(x-1, y-1), (x-1, y), (x-1, y+1), (x, y-1),
@@ -63,15 +64,15 @@ class Game:
     def __draw_cell(self, x, y):
         number_font = pg.font.SysFont(s.font_name, int(s.font_size * 9 / self.dif[0]))
         cell_x, cell_y = (
-            s.window[0] + x * (s.cell_size + s.line_width),
-            s.window[1] + y * (s.cell_size + s.line_width),
+            p.window[0] + x * (p.cell_size + s.line_width),
+            p.window[1] + y * (p.cell_size + s.line_width),
         )
         cell_value = ''
         opened_cell_cords = [
-            s.window[0] + x * (s.cell_size + s.line_width) + 2,
-            s.window[1] + y * (s.cell_size + s.line_width) + 2,
-            s.cell_size - 2,
-            s.cell_size - 2,
+            p.window[0] + x * (p.cell_size + s.line_width) + s.line_width,
+            p.window[1] + y * (p.cell_size + s.line_width) + s.line_width,
+            p.cell_size - s.line_width // 2,
+            p.cell_size - s.line_width // 2,
         ]
         if self.game_field.field[x][y].is_opened:
             opened_cell_color = tuple(map(lambda x: x - 25, s.colors['frame']))
@@ -81,16 +82,16 @@ class Game:
             elif self.game_field.field[x][y].value == -1:
                 bomb = pg.image.load('assets/bomb.png').convert_alpha()
                 mini_bomb = pg.transform.scale(
-                    bomb, (s.cell_size, s.cell_size))
+                    bomb, (p.cell_size, p.cell_size))
                 s.screen.blit(mini_bomb, opened_cell_cords[:2])
         elif self.game_field.field[x][y].has_flag:
             flag = pg.image.load('assets/flag.png').convert_alpha()
-            mini_flag = pg.transform.scale(flag, (int(s.cell_size * 0.95), s.cell_size))
+            mini_flag = pg.transform.scale(flag, (int(p.cell_size * 0.95), p.cell_size))
             s.screen.blit(mini_flag, opened_cell_cords[:2])
         else:
             pg.draw.rect(s.screen, s.colors['frame'], opened_cell_cords)
         text = number_font.render(cell_value, True, s.colors['text'])
-        text_rect = text.get_rect(center=(cell_x + s.cell_size // 2, cell_y + s.cell_size // 2))
+        text_rect = text.get_rect(center=(cell_x + p.cell_size // 2, cell_y + p.cell_size // 2))
         s.screen.blit(text, text_rect)
 
     def draw_field(self):
@@ -137,6 +138,7 @@ class Game:
         self.opened_cells = 0
         self.mine_places.clear()
         self.is_new = True
+        self.best_record = self.get_best_result()
 
     def show_mines(self, delay_ms=100, pause_ms=800):
         for i, j in self.mine_places:

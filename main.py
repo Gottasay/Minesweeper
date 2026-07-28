@@ -5,7 +5,7 @@ from settings import SFX as sfx
 from settings import MessageScreen as m
 from settings import PlayWindow as p
 import pygame as pg
-from draw_schemas import draw_text_button, is_button_pressed, draw_picture_button, draw_sfx, draw_lines
+from draw_schemas import draw_text_button, is_button_pressed, draw_picture_button, draw_sfx, draw_lines, draw_info
 
 
 def change_volume(state, s_cords, m_cords):
@@ -20,21 +20,22 @@ def change_volume(state, s_cords, m_cords):
 def screen_changed():
     info = pg.display.Info()
     cur_width = info.current_w
-    if cur_width != s.width:
+    cur_height = info.current_h
+    if cur_width != s.width or cur_height != s.height:
         toggle_fullscreen()
 
 def toggle_fullscreen():
     if s.is_fulscreen:
-        s.screen = pg.display.set_mode((s.prev_width, s.prev_height))
+        s.screen = pg.display.set_mode((s.prev_width, s.prev_height), pg.RESIZABLE)
         s.width, s.height = s.prev_width, s.prev_height
         s.is_fulscreen = False
     else:
         s.prev_width, s.prev_height = s.width, s.height
         info = pg.display.Info()
         s.width, s.height = info.current_w, info.current_h
-        s.screen = pg.display.set_mode((s.width, s.height), pg.FULLSCREEN)
+        s.screen = pg.display.set_mode((s.width, s.height), pg.RESIZABLE)
         s.is_fulscreen = True
-    p.button_size = p.window[2] // 8
+    p.button_size = s.height * 11 // 100
     p.settings_cords = [s.width - p.button_size - 15, 15, p.button_size, p.button_size]
     m_side = s.height // 1.8
     w_rect, w_mini = s.height * 2 // 3, s.height * 4 // 5
@@ -289,44 +290,21 @@ def main():
     pg.display.set_caption('Minesweeper')
     icon = pg.image.load('assets/icon.png')
     pg.display.set_icon(icon)
-    
     dificulty = main_menu()
     game = Game(dificulty)
-    
-    
     bomb = pg.image.load('assets/bomb.png').convert_alpha()
     flag = pg.image.load('assets/flag.png').convert_alpha()
     pause = pg.image.load('assets/pause.png').convert_alpha()
-    
-    
-    clue_font = pg.font.SysFont(s.font_name, s.mini_font_size)
-    info_font = pg.font.SysFont(s.font_name, s.font_size)
-    record_font = pg.font.SysFont(s.font_name, s.font_size)
-    
     pg.mixer.music.set_volume(sfx.music_volume)
     sound_set(sfx.sound_volume)
     pg.mixer.music.pause()
     
     def redraw():
-        mini_bomb = pg.transform.scale(bomb, (s.big_font_size, s.big_font_size))
-        mini_flag = pg.transform.scale(flag, (s.big_font_size, s.big_font_size))
         mini_pause = pg.transform.scale(pause, (p.button_size, p.button_size))
-            
-        clue_cords = [p.window[0] // 12, p.window[1] * 1.5]
-        bomb_cords = (clue_cords[0], s.height // 2.25)
-        flag_cords = (clue_cords[0], bomb_cords[1] + s.big_font_size)
-        cur_record_cords = [p.window[0] * 1.20, p.window[1] // 4]
-        best_record_cords = [p.window[0] + p.window[2] - cur_record_cords[0], cur_record_cords[1]]
-        flag_amount_cords = [flag_cords[0] + s.big_font_size, flag_cords[1]]
-        
-        cur = f'Record - {game.record}'
-        s.screen.blit(info_font.render(f' - {game.flags}', True, s.colors['text']), flag_amount_cords)
         p.window_side = s.height * 3 // 4
         p.window_x, p.window_y = (s.width - p.window_side) // 2, (s.height - p.window_side) // 2
         p.window = [p.window_x, p.window_y, p.window_side, p.window_side]
         p.cell_size = max(1, (p.window[2] - s.line_width * (game.game_field.size - 1)) // game.game_field.size)      
-        best_msg = f'Best - {game.best_record}'
-        
         s.screen.fill(s.colors['screen'])
         pg.draw.rect(s.screen, s.colors['frame'], p.window)
         draw_lines(s.screen, game.game_field.size)
@@ -336,14 +314,7 @@ def main():
             border_radius=10, picture=mini_pause, width=3,
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         )
-        s.screen.blit(clue_font.render(p.clues[0], True, s.colors['text']), clue_cords)
-        s.screen.blit(clue_font.render(p.clues[1], True, s.colors['text']), [clue_cords[0], clue_cords[1] + s.mini_font_size * 2])
-        s.screen.blit(clue_font.render(p.clues[2], True, s.colors['text']), [clue_cords[0], clue_cords[1] + s.mini_font_size * 4])
-        s.screen.blit(record_font.render(cur, True, s.colors['text']), cur_record_cords)
-        s.screen.blit(record_font.render(best_msg, True, s.colors['text']), best_record_cords)
-        s.screen.blit(mini_bomb, bomb_cords)
-        s.screen.blit(mini_flag, flag_cords)
-        s.screen.blit(info_font.render(f' - {game.game_field.mines}', True, s.colors['text']), [bomb_cords[0] + s.big_font_size, bomb_cords[1]])
+        draw_info(game, bomb, flag)
         game.draw_field()
         
     while game.running:

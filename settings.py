@@ -24,7 +24,6 @@ class PlayWindow:
     button_color = tuple(map(lambda x: x - 30, Settings.colors['screen']))
     settings_cords = [Settings.width - button_size - 15, 15, button_size, button_size]
     cell_size = None
-    clues = ['LMB - open', 'RMB - put/remove', 'flag']
     
 class SFX:
     sound_volume = 1.0

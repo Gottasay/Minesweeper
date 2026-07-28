@@ -310,7 +310,8 @@ def main():
     pause = pg.image.load('assets/pause.png').convert_alpha()
     pg.mixer.music.set_volume(sfx.music_volume)
     sound_set(sfx.sound_volume)
-    pg.mixer.music.pause()
+    pg.mixer.music.load('music/monkeys.wav')
+    pg.mixer.music.play(-1)
     
     def redraw():
         mini_pause = pg.transform.scale(pause, (p.button_size, p.button_size))

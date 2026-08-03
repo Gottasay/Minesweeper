@@ -16,7 +16,7 @@ class Settings:
     colors = {'line': (169, 143, 45), 'frame': (255, 231, 138), 'screen': (227, 213, 161), 'text': (132, 113, 42)}
     extra_colors = {'line': (87,0,0), 'frame': (59,59,59), 'screen': (80,80,80), 'text': (117,0,0)}
     field_params = {'easy': (9, 10), 'medium': (16, 35), 'hard': (20, 80)}
-    time_params = {'easy': 45, 'medium': 90, 'hard': 180}
+    time_params = {'easy': 60, 'medium': 120, 'hard': 240}
     cruel_mode = False
     line_width = 4
     font_size = 32

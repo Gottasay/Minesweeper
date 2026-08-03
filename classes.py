@@ -4,7 +4,7 @@ from settings import SFX as sfx
 from settings import PlayWindow as p
 from settings import IMG as img
 import pygame as pg
-
+import csv
 
 class Cell:
     def __init__(self, value=0, is_opened=False, has_flag=False):
@@ -146,8 +146,10 @@ class Game:
             self.expire_time = time() + s.time_params[s.current_difficulty]
             
     def show_mines(self, delay_ms=100, pause_ms=800):
-        # if not self.mine_places:
-            
+        if not self.mine_places:
+            s.screen.blit(pg.transform.scale(img.picture('bomb'), p.window[2:]), p.window[:2])
+            sfx.all_sounds['bomb'].play()
+            pg.display.update()
         for i, j in self.mine_places:
             if not self.game_field.field[i][j].has_flag:
                 self.game_field.field[i][j].is_opened = True
@@ -158,20 +160,36 @@ class Game:
                 pg.event.pump()
         pg.time.delay(pause_ms)
 
+        
     def get_best_result(self):
+        results_file = 'best_results.csv' if not s.cruel_mode else 'best_results_cruel.csv'
         try:
-            with open('best_result', 'r') as best:
-                return int(best.readline())
-        except FileNotFoundError:
-            with open('best_result', 'w') as best:
-                best.write('0')
+            with open(results_file, 'r+', encoding='utf-8', newline='') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row['difficulty'] == s.current_difficulty:
+                        return int(row['record'])
+                writer = csv.DictWriter(file, fieldnames=['difficulty', 'record'])
+                writer.writerow({'difficulty': s.current_difficulty, 'record': 0})
                 return 0
-            
+        except FileNotFoundError:
+            with open(results_file, 'w', encoding='utf-8', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=['difficulty', 'record'])
+                writer.writeheader()
+                writer.writerow({'difficulty': s.current_difficulty, 'record': 0})
+                return 0
+                
     def change_result(self):
-        with open('best_result', 'w') as best:
-            best.write(f'{self.record}')
-            
-class Timer:
-    def __init__(self, secs):
-        self.secs = secs
-        self.is_done = False
+        rows = []
+        results_file = 'best_results.csv' if not s.cruel_mode else 'best_results_cruel.csv'
+        with open(results_file, 'r', encoding='utf-8', newline='') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['difficulty'] == s.current_difficulty:
+                    rows.append({'difficulty': s.current_difficulty, 'record': self.record})
+                    continue
+                rows.append(row)
+        with open(results_file, 'w', encoding='utf-8', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=['difficulty', 'record'])
+            writer.writeheader()
+            writer.writerows(rows)

@@ -4,6 +4,7 @@ from settings import Settings as s
 from settings import SFX as sfx
 from settings import MessageScreen as m
 from settings import PlayWindow as p
+from settings import IMG as img
 import pygame as pg
 from draw_schemas import draw_text_button, is_button_pressed, draw_picture_button, draw_sfx, draw_lines, draw_info, draw_timer
 from time import time
@@ -91,7 +92,7 @@ def choose_dificulty():
         easy_cords = (s.width // 10, s.height * 2 // 3, s.width // 5, s.height // 6)
         medium_cords = (s.width // 10 * 2 + s.width // 5, s.height * 2 // 3, s.width // 5, s.height // 6)
         hard_cords = (s.width // 10 * 3 + s.width // 5 * 2, s.height * 2 // 3, s.width // 5, s.height // 6)
-        settings = pg.transform.scale(pg.image.load('assets/settings.png').convert_alpha(), (p.button_size, p.button_size))
+        settings = pg.transform.scale(img.picture('settings'), (p.button_size, p.button_size))
         s.screen.fill(s.colors['screen'])
         s.screen.blit(message, ((s.width - len(choose_msg) * s.big_font_size // 2) // 2, s.height // 3))
         draw_picture_button(
@@ -150,7 +151,7 @@ def main_menu():
     msg = 'Welcome to Minesweeper!'
     play_msg = 'Start'
     mode_msg = 'Hardmode'
-    picture = pg.image.load('assets/main.jpg').convert_alpha()
+    picture = img.picture('main')
     pg.mixer.music.load('music/meatball.wav')
     pg.mixer.music.play(-1)
     def redraw():
@@ -161,7 +162,7 @@ def main_menu():
         change_mode_cords = [play_button_cords[0], play_button_cords[1] + play_button_cords[3] + 20, play_button_cords[2], play_button_cords[3]]
         picture_cords = [(s.width - pic_width) // 2, s.height // 5, pic_width, s.height // 2]
         mini_picture = pg.transform.scale(picture, picture_cords[2:])  
-        settings = pg.transform.scale(pg.image.load('assets/settings.png').convert_alpha(), (p.button_size, p.button_size))
+        settings = pg.transform.scale(img.picture('settings'), (p.button_size, p.button_size))
         s.screen.fill(s.colors['screen'])
         s.screen.blit(msg_font.render(msg, True, s.colors['text']), msg_cords)
         s.screen.blit(mini_picture, picture_cords[:2])
@@ -210,13 +211,12 @@ def main_menu():
 
 def stop_game(game, redraw, type=0, timer=None):
     end = {
-        0: {'message': 'You lose!', 'main_pic': 'cat.png', 'button_set': ('home.png', 'retry.png')},
-        1: {'message': 'You win!', 'main_pic': 'omniman.jpg', 'button_set': ('home.png', 'next.png')},
-        2: {'message': 'Game paused!', 'main_pic': '', 'button_set': ('home.png', 'retry.png', 'continue.png')}}
+        0: {'message': 'You lose!', 'main_pic': 'defeat', 'button_set': ('home', 'retry')},
+        1: {'message': 'You win!', 'main_pic': 'victory', 'button_set': ('home', 'next')},
+        2: {'message': 'Game paused!', 'main_pic': '', 'button_set': ('home', 'retry', 'cont')}}
     
     record = f'Your record: {game.record}'
     first_call = True
-    pref = 'assets/'
     if type == 2 and s.cruel_mode:
         pause_time = time()
     while True:
@@ -236,9 +236,9 @@ def stop_game(game, redraw, type=0, timer=None):
         record_msg = mess_font.render(record, True, s.colors['text'])
         record_rect = record_msg.get_rect(center=(center_x, center_y - s.font_size * 3.5))
         
-        home_pic = pg.transform.scale(pg.image.load(pref + end[type]['button_set'][0]).convert_alpha(), button_1_cords[2:])
-        refresh_pic = pg.transform.scale(pg.image.load(pref + end[type]['button_set'][1]).convert_alpha(), button_2_cords[2:])
-        main_pic = pg.transform.scale(pg.image.load(pref + end[type]['main_pic']).convert_alpha(), main_pic_cords[2:]) if end[type]['main_pic'] else None
+        home_pic = pg.transform.scale(img.picture(end[type]['button_set'][0]), button_1_cords[2:])
+        refresh_pic = pg.transform.scale(img.picture(end[type]['button_set'][1]), button_2_cords[2:])
+        main_pic = pg.transform.scale(img.picture(end[type]['main_pic']), main_pic_cords[2:]) if end[type]['main_pic'] else None
             
         draw_text_button(
             s.screen, m.color, rect_cords,
@@ -267,7 +267,7 @@ def stop_game(game, redraw, type=0, timer=None):
                 first_call = False
             s.screen.blit(record_msg, record_rect)
         else:
-            continue_pic = pg.transform.scale(pg.image.load(pref + end[type]['button_set'][2]).convert_alpha(), button_2_cords[2:])
+            continue_pic = pg.transform.scale(img.picture(end[type]['button_set'][2]), button_2_cords[2:])
             button_3_cords = [(button_1_cords[0] + button_2_cords[0]) // 2, button_1_cords[1], b // 5, b // 5]
             draw_picture_button(
                 s.screen, p.button_color, button_3_cords,
@@ -319,13 +319,12 @@ def main():
     pg.mixer.init()
     s.screen = pg.display.set_mode((s.width, s.height), pg.RESIZABLE)
     pg.display.set_caption('Minesweeper')
-    icon = pg.image.load('assets/icon.png')
+    icon = img.picture('icon')
     pg.display.set_icon(icon)
     dificulty = main_menu()
     game = Game(dificulty)
-    bomb = pg.image.load('assets/bomb.png').convert_alpha()
-    flag = pg.image.load('assets/flag.png').convert_alpha()
-    pause = pg.image.load('assets/pause.png').convert_alpha()
+    
+    pause = img.picture('pause')
     pg.mixer.music.set_volume(sfx.music_volume)
     sound_set(sfx.sound_volume)
     pg.mixer.music.load('music/monkeys.wav')
@@ -348,7 +347,7 @@ def main():
             border_radius=10, picture=mini_pause, width=3,
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         )
-        draw_info(game, bomb, flag)
+        draw_info(game)
         game.draw_field()
         
     while game.running:

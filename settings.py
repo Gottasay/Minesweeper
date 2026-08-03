@@ -1,5 +1,6 @@
-from pygame import mixer
+from pygame import mixer, image
 from pygame.mixer import Sound
+from pygame.image import load
 
 mixer.init()
 class Settings:
@@ -66,4 +67,34 @@ class MessageScreen:
     
 
 class IMG:
-    pass
+    icon = load('assets/icon.png')
+    
+    flag = load('assets/flag.png')
+    bomb = load('assets/bomb.png')
+    defeat = load('assets/cat.png')
+    victory = load('assets/omniman.jpg')
+    main = load('assets/main.jpg')
+    
+    home = load('assets/home.png')
+    cont = load('assets/continue.png')
+    retry = load('assets/retry.png')
+    next = load('assets/next.png')
+    pause = load('assets/pause.png')
+    settings = load('assets/settings.png')
+    
+    music_on = load('assets/music_on.png')
+    sound_on = load('assets/sound_on.png')
+    music_off = load('assets/music_off.png')
+    sound_off = load('assets/sound_off.png')
+    
+    other_flag = None
+    other_bomb = None
+    other_defeat = None
+    other_victory = None
+    other_main = None
+    
+    @classmethod
+    def picture(cls, img):
+        return cls.__dict__[img].convert_alpha()
+        
+    

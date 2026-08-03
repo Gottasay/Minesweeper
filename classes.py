@@ -2,6 +2,7 @@ from random import randint
 from settings import Settings as s
 from settings import SFX as sfx
 from settings import PlayWindow as p
+from settings import IMG as img
 import pygame as pg
 
 
@@ -83,14 +84,12 @@ class Game:
             if self.game_field.field[x][y].value > 0:
                 cell_value = f'{self.game_field.field[x][y].value}'
             elif self.game_field.field[x][y].value == -1:
-                bomb = pg.image.load('assets/bomb.png').convert_alpha()
-                mini_bomb = pg.transform.scale(
-                    bomb, (p.cell_size, p.cell_size))
-                s.screen.blit(mini_bomb, opened_cell_cords[:2])
+                bomb = pg.transform.scale(
+                    img.picture('bomb'), (p.cell_size, p.cell_size))
+                s.screen.blit(bomb, opened_cell_cords[:2])
         elif self.game_field.field[x][y].has_flag:
-            flag = pg.image.load('assets/flag.png').convert_alpha()
-            mini_flag = pg.transform.scale(flag, (int(p.cell_size * 0.95), p.cell_size))
-            s.screen.blit(mini_flag, opened_cell_cords[:2])
+            flag = pg.transform.scale(img.picture('flag'), (int(p.cell_size * 0.95), p.cell_size))
+            s.screen.blit(flag, opened_cell_cords[:2])
         else:
             pg.draw.rect(s.screen, s.colors['frame'], opened_cell_cords)
         text = number_font.render(cell_value, True, s.colors['text'])

@@ -11,7 +11,12 @@ class Settings:
     base_height = height
     is_fulscreen = False
     screen = None
+    current_difficulty = None
     colors = {'line': (169, 143, 45), 'frame': (255, 231, 138), 'screen': (227, 213, 161), 'text': (132, 113, 42)}
+    extra_colors = {'line': (179,0,115), 'frame': (255,103,25), 'screen': (83, 9, 9), 'text': (179,0,115)}
+    field_params = {'easy': (9, 10), 'medium': (16, 35), 'hard': (20, 80)}
+    time_params = {'easy': 5, 'medium': 90, 'hard': 180}
+    cruel_mode = False
     line_width = 4
     font_size = 32
     mini_font_size = 16
@@ -59,3 +64,6 @@ class MessageScreen:
     width = Settings.line_width
     line_color = tuple(map(lambda x: x - 30, Settings.colors['screen']))
     
+
+class IMG:
+    pass

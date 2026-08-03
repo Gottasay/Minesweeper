@@ -37,6 +37,7 @@ class Game:
         self.best_record = self.get_best_result()
         self.running = True
         self.mine_places = set()
+        self.expire_time = None
         
     def __mine_neighbours(self, x, y):
         neighbours = [(x-1, y-1), (x-1, y), (x-1, y+1), (x, y-1),
@@ -45,7 +46,7 @@ class Game:
             if 0 <= i < self.game_field.size and 0 <= j < self.game_field.size and self.game_field.field[i][j].value >= 0:
                 self.game_field.field[i][j].value += 1
 
-    def __remove_empty_cells(self, x, y):
+    def __remove_empty_cells(self, x, y, delay_ms=10):
         if not self.game_field.field[x][y].has_flag:
             self.opened_cells += 1
             self.game_field.field[x][y].is_opened = True
@@ -59,6 +60,8 @@ class Game:
                         0 <= j < self.game_field.size and
                         not self.game_field.field[i][j].is_opened
                     ):
+                        pg.time.delay(delay_ms)
+                        pg.display.update()
                         self.__remove_empty_cells(i, j)
 
     def __draw_cell(self, x, y):
@@ -139,8 +142,13 @@ class Game:
         self.mine_places.clear()
         self.is_new = True
         self.best_record = self.get_best_result()
-
+        if s.cruel_mode:
+            from time import time
+            self.expire_time = time() + s.time_params[s.current_difficulty]
+            
     def show_mines(self, delay_ms=100, pause_ms=800):
+        # if not self.mine_places:
+            
         for i, j in self.mine_places:
             if not self.game_field.field[i][j].has_flag:
                 self.game_field.field[i][j].is_opened = True
@@ -163,3 +171,8 @@ class Game:
     def change_result(self):
         with open('best_result', 'w') as best:
             best.write(f'{self.record}')
+            
+class Timer:
+    def __init__(self, secs):
+        self.secs = secs
+        self.is_done = False

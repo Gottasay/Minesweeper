@@ -5,8 +5,8 @@ from settings import SFX as sfx
 from settings import MessageScreen as m
 from settings import PlayWindow as p
 import pygame as pg
-from draw_schemas import draw_text_button, is_button_pressed, draw_picture_button, draw_sfx, draw_lines, draw_info
-
+from draw_schemas import draw_text_button, is_button_pressed, draw_picture_button, draw_sfx, draw_lines, draw_info, draw_timer
+from time import time
 
 def change_volume(state, s_cords, m_cords):
     mouse = pg.mouse.get_pos()
@@ -84,7 +84,6 @@ def game_parameters(redraw):
         
 def choose_dificulty():
     choose_msg = 'Choose difficulty:'
-    params = [(9, 10), (16, 35), (20, 80)]
     def redraw():
         mess_font = pg.font.SysFont(s.font_name, s.big_font_size)
         message = mess_font.render(choose_msg, True , s.colors['text'])
@@ -133,13 +132,16 @@ def choose_dificulty():
                     game_parameters(redraw)
                 if is_button_pressed(mouse, easy_cords):
                     sfx.all_sounds['button'].play()
-                    return params[0]
+                    s.current_difficulty = 'easy'
+                    return s.field_params[s.current_difficulty]
                 if is_button_pressed(mouse, medium_cords):
                     sfx.all_sounds['button'].play()
-                    return params[1]
+                    s.current_difficulty = 'medium'
+                    return s.field_params[s.current_difficulty]
                 if is_button_pressed(mouse, hard_cords):
                     sfx.all_sounds['button'].play()
-                    return params[2]
+                    s.current_difficulty = 'hard'
+                    return s.field_params[s.current_difficulty]
         
         pg.display.update()
 
@@ -147,7 +149,7 @@ def choose_dificulty():
 def main_menu():
     msg = 'Welcome to Minesweeper!'
     play_msg = 'Start'
-    
+    mode_msg = 'Hardmode'
     picture = pg.image.load('assets/main.jpg').convert_alpha()
     pg.mixer.music.load('music/meatball.wav')
     pg.mixer.music.play(-1)
@@ -155,7 +157,8 @@ def main_menu():
         msg_font = pg.font.SysFont(s.font_name, s.big_font_size)
         msg_cords = (s.width - len(msg) * s.big_font_size // 2) // 2, s.height // 12
         pb_width, pic_width = s.height * 2 // 3, s.height * 2 // 3
-        play_button_cords = [(s.width - pb_width) // 2, s.height * 3 // 4, pb_width, s.height // 10]
+        play_button_cords = [(s.width - pb_width) // 2, s.height * 2.2 // 3, pb_width, s.height // 10]
+        change_mode_cords = [play_button_cords[0], play_button_cords[1] + play_button_cords[3] + 20, play_button_cords[2], play_button_cords[3]]
         picture_cords = [(s.width - pic_width) // 2, s.height // 5, pic_width, s.height // 2]
         mini_picture = pg.transform.scale(picture, picture_cords[2:])  
         settings = pg.transform.scale(pg.image.load('assets/settings.png').convert_alpha(), (p.button_size, p.button_size))
@@ -167,15 +170,20 @@ def main_menu():
             border_radius=10, msg=play_msg, msg_size=s.font_size, msg_orient='center', width=2,
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         )
+        draw_text_button(
+            s.screen, p.button_color, change_mode_cords,
+            border_radius=10, msg=mode_msg, msg_size=s.font_size, msg_orient='center', width=2,
+            line_color=tuple(map(lambda x: x - 30, p.button_color))
+                        )
         draw_picture_button(
             s.screen, p.button_color, p.settings_cords,
             border_radius=10, picture=settings, width=3,
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         )
-        return play_button_cords
+        return play_button_cords, change_mode_cords
     while True:
         screen_changed()
-        play_button_cords = redraw()
+        play_button_cords, change_mode_cords = redraw()[0], redraw()[1]
         mouse = pg.mouse.get_pos()
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -190,13 +198,17 @@ def main_menu():
                 if is_button_pressed(mouse, play_button_cords):
                     sfx.all_sounds['button'].play()
                     return choose_dificulty()
+                elif is_button_pressed(mouse, change_mode_cords):
+                    s.colors, s.extra_colors = s.extra_colors, s.colors
+                    s.cruel_mode = not s.cruel_mode
+                    # redraw()
                 elif is_button_pressed(mouse, p.settings_cords):
                     game_parameters(redraw)
                         
         pg.display.update()    
                     
 
-def stop_game(game, redraw, type=0):
+def stop_game(game, redraw, type=0, timer=None):
     end = {
         0: {'message': 'You lose!', 'main_pic': 'cat.png', 'button_set': ('home.png', 'retry.png')},
         1: {'message': 'You win!', 'main_pic': 'omniman.jpg', 'button_set': ('home.png', 'next.png')},
@@ -205,9 +217,13 @@ def stop_game(game, redraw, type=0):
     record = f'Your record: {game.record}'
     first_call = True
     pref = 'assets/'
+    if type == 2 and s.cruel_mode:
+        pause_time = time()
     while True:
         screen_changed()
         redraw()
+        if s.cruel_mode:
+            draw_timer(timer)
         x, y, a, b = m.rect
         rect_cords = [x, y, a, b]
         button_1_cords = [x + a // 10, y + int(b * 23/30), b // 5, b // 5]
@@ -284,6 +300,8 @@ def stop_game(game, redraw, type=0):
                     return
                 elif type == 2 and (is_button_pressed(mouse, button_3_cords) or is_button_pressed(mouse, p.settings_cords)):
                     sfx.all_sounds['button'].play()
+                    if s.cruel_mode:
+                        game.expire_time += time() - pause_time
                     game.is_new = True
                     return
         if type == 2:
@@ -312,6 +330,8 @@ def main():
     sound_set(sfx.sound_volume)
     pg.mixer.music.load('music/monkeys.wav')
     pg.mixer.music.play(-1)
+    if s.cruel_mode:
+        game.expire_time = time() + s.time_params[s.current_difficulty]
     
     def redraw():
         mini_pause = pg.transform.scale(pause, (p.button_size, p.button_size))
@@ -334,6 +354,12 @@ def main():
     while game.running:
         screen_changed()
         redraw()
+        if s.cruel_mode:
+            time_left = game.expire_time - time()
+            draw_timer(time_left)
+            if time_left <= 0:
+                game.show_mines()
+                stop_game(game, redraw=redraw, timer=0)
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
@@ -362,12 +388,14 @@ def main():
                             sfx.all_sounds['button'].play()
                             if new_cell.value == -1:
                                 game.show_mines()
-                                stop_game(game, redraw=redraw)
+                                timer = game.expire_time - time() if game.expire_time else None
+                                stop_game(game, redraw=redraw, timer=timer)
                             elif game.opened_cells == game.game_field.size ** 2 - game.game_field.mines:
                                 game.record += 1
                                 if game.record > game.best_record:
                                     game.change_result()
-                                stop_game(game, redraw=redraw, type=1)
+                                timer = game.expire_time - time() if game.expire_time else None
+                                stop_game(game, redraw=redraw, type=1, timer=timer)
                     elif event.button == 3:
                         if not game.game_field.field[cell_x][cell_y].has_flag:
                             if game.flags > 0:
@@ -376,7 +404,8 @@ def main():
                             game.remove_flag(cell_x, cell_y)
                 elif is_button_pressed(mouse, p.settings_cords):
                     sfx.all_sounds['pause'].play()
-                    stop_game(game, redraw=redraw, type=2)
+                    time_left = game.expire_time - time() if game.expire_time else None
+                    stop_game(game, redraw=redraw, type=2, timer=time_left)
         pg.display.update()
                             
 if __name__ == '__main__':

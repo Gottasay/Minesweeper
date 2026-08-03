@@ -13,7 +13,7 @@ def change_volume(state, s_cords, m_cords):
     mouse = pg.mouse.get_pos()
     if state and s_cords[0][0] <= mouse[0] <= s_cords[1][0] and s_cords[0][1] - 10 <= mouse[1] <= s_cords[0][1] + 10:
         sfx.sound_volume = (mouse[0] - s_cords[0][0]) / (s_cords[1][0] - s_cords[0][0])
-        sound_set(sfx.sound_volume)
+        sfx.set_volume(sound_volume=sfx.sound_volume)
     elif state and m_cords[0][0] <= mouse[0] <= m_cords[1][0] and m_cords[0][1] - 10 <= mouse[1] <= m_cords[0][1] + 10:
         sfx.music_volume = (mouse[0] - m_cords[0][0]) / (m_cords[1][0] - m_cords[0][0])
         pg.mixer.music.set_volume(sfx.music_volume)
@@ -66,7 +66,7 @@ def game_parameters(redraw):
         draw_text_button(
             s.screen, m.color, m.mini_rect,
             border_radius=10, msg='Settings', msg_size=s.big_font_size,
-            msg_orient='top', width=5, line_color=p.button_color
+            msg_color=s.colors['text'], msg_orient='top', width=5, line_color=p.button_color
             )
         s1, s2, m1, m2 = draw_sfx()
         change_volume(pg.mouse.get_pressed()[0], (s1, s2), (m1, m2))
@@ -101,18 +101,19 @@ def choose_dificulty():
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         ) 
         draw_text_button(
-            s.screen, p.button_color, easy_cords,
-            border_radius=10, msg='Easy', msg_size=s.font_size, msg_orient='center',
+            s.screen, p.button_color, easy_cords, border_radius=10, msg='Easy',
+            msg_size=s.font_size, msg_color=s.colors['text'],
+            msg_orient='center', width=2,
+            line_color=tuple(map(lambda x: x - 50, p.button_color))
+            )
+        draw_text_button(
+            s.screen, p.button_color, medium_cords, border_radius=10, msg='Medium',
+            msg_size=s.font_size, msg_color=s.colors['text'], msg_orient='center',
             width=2, line_color=tuple(map(lambda x: x - 50, p.button_color))
             )
         draw_text_button(
-            s.screen, p.button_color, medium_cords,
-            border_radius=10, msg='Medium', msg_size=s.font_size, msg_orient='center',
-            width=2,line_color=tuple(map(lambda x: x - 50, p.button_color))
-            )
-        draw_text_button(
-            s.screen, p.button_color, hard_cords,
-            border_radius=10, msg='Hard', msg_size=s.font_size, msg_orient='center',
+            s.screen, p.button_color, hard_cords, border_radius=10, msg='Hard',
+            msg_size=s.font_size, msg_color=s.colors['text'], msg_orient='center',
             width=2, line_color=tuple(map(lambda x: x - 50, p.button_color))
             )
         return easy_cords, medium_cords, hard_cords
@@ -149,12 +150,14 @@ def choose_dificulty():
 
 def main_menu():
     msg = 'Welcome to Minesweeper!'
+    other_msg = 'Welcome to Mineslayer!'
     play_msg = 'Start'
-    mode_msg = 'Hardmode'
-    picture = img.picture('main')
-    pg.mixer.music.load('music/meatball.wav')
+    mode_msg = 'Cruel mode'
+    other_mode_msg = 'Classic'
+    pg.mixer.music.load(sfx.music['main'])
     pg.mixer.music.play(-1)
     def redraw():
+        picture = img.picture('main')
         msg_font = pg.font.SysFont(s.font_name, s.big_font_size)
         msg_cords = (s.width - len(msg) * s.big_font_size // 2) // 2, s.height // 12
         pb_width, pic_width = s.height * 2 // 3, s.height * 2 // 3
@@ -168,12 +171,12 @@ def main_menu():
         s.screen.blit(mini_picture, picture_cords[:2])
         draw_text_button(
             s.screen, p.button_color, play_button_cords,
-            border_radius=10, msg=play_msg, msg_size=s.font_size, msg_orient='center', width=2,
+            border_radius=10, msg=play_msg, msg_color=s.colors['text'], msg_size=s.font_size, msg_orient='center', width=2,
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         )
         draw_text_button(
             s.screen, p.button_color, change_mode_cords,
-            border_radius=10, msg=mode_msg, msg_size=s.font_size, msg_orient='center', width=2,
+            border_radius=10, msg=mode_msg, msg_color=s.colors['text'], msg_size=s.font_size, msg_orient='center', width=2,
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         )
         draw_picture_button(
@@ -200,9 +203,11 @@ def main_menu():
                     sfx.all_sounds['button'].play()
                     return choose_dificulty()
                 elif is_button_pressed(mouse, change_mode_cords):
-                    s.colors, s.extra_colors = s.extra_colors, s.colors
-                    s.cruel_mode = not s.cruel_mode
-                    # redraw()
+                    s.swapmode()
+                    pg.mixer.music.load(sfx.music['main'])
+                    pg.mixer.music.play(-1)
+                    msg, other_msg = other_msg, msg
+                    mode_msg, other_mode_msg = other_mode_msg, mode_msg
                 elif is_button_pressed(mouse, p.settings_cords):
                     game_parameters(redraw)
                         
@@ -211,8 +216,8 @@ def main_menu():
 
 def stop_game(game, redraw, type=0, timer=None):
     end = {
-        0: {'message': 'You lose!', 'main_pic': 'defeat', 'button_set': ('home', 'retry')},
-        1: {'message': 'You win!', 'main_pic': 'victory', 'button_set': ('home', 'next')},
+        0: {'message': 'You lose!' if not s.cruel_mode else 'You lose, blazarius.', 'main_pic': 'defeat', 'button_set': ('home', 'retry')},
+        1: {'message': 'You win!' if not s.cruel_mode else 'You win, sir.', 'main_pic': 'victory', 'button_set': ('home', 'next')},
         2: {'message': 'Game paused!', 'main_pic': '', 'button_set': ('home', 'retry', 'cont')}}
     
     record = f'Your record: {game.record}'
@@ -241,7 +246,7 @@ def stop_game(game, redraw, type=0, timer=None):
         main_pic = pg.transform.scale(img.picture(end[type]['main_pic']), main_pic_cords[2:]) if end[type]['main_pic'] else None
             
         draw_text_button(
-            s.screen, m.color, rect_cords,
+            s.screen, m.color, rect_cords, msg_color=s.colors['text'],
             border_radius=10, msg=end[type]['message'], msg_size=s.font_size,
             msg_orient='top', width=5, line_color=p.button_color
             )
@@ -257,7 +262,7 @@ def stop_game(game, redraw, type=0, timer=None):
             )
         if type == 0:
             if first_call:
-                sfx.all_sounds['cat'].play()
+                sfx.all_sounds['defeat'].play()
                 first_call = False
             game.record = 0
             s.screen.blit(record_msg, record_rect)
@@ -309,9 +314,7 @@ def stop_game(game, redraw, type=0, timer=None):
             draw_sfx()
         pg.display.update()
 
-def sound_set(value):
-    for sound in sfx.all_sounds.values():
-        sound.set_volume(value)
+
    
 def main():
     pg.init()
@@ -326,8 +329,8 @@ def main():
     
     pause = img.picture('pause')
     pg.mixer.music.set_volume(sfx.music_volume)
-    sound_set(sfx.sound_volume)
-    pg.mixer.music.load('music/monkeys.wav')
+    sfx.set_volume(sound_volume=sfx.sound_volume)
+    pg.mixer.music.load(sfx.music['game'])
     pg.mixer.music.play(-1)
     if s.cruel_mode:
         game.expire_time = time() + s.time_params[s.current_difficulty]

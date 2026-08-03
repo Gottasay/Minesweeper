@@ -14,9 +14,9 @@ class Settings:
     screen = None
     current_difficulty = None
     colors = {'line': (169, 143, 45), 'frame': (255, 231, 138), 'screen': (227, 213, 161), 'text': (132, 113, 42)}
-    extra_colors = {'line': (179,0,115), 'frame': (255,103,25), 'screen': (83, 9, 9), 'text': (179,0,115)}
+    extra_colors = {'line': (87,0,0), 'frame': (59,59,59), 'screen': (80,80,80), 'text': (117,0,0)}
     field_params = {'easy': (9, 10), 'medium': (16, 35), 'hard': (20, 80)}
-    time_params = {'easy': 5, 'medium': 90, 'hard': 180}
+    time_params = {'easy': 45, 'medium': 90, 'hard': 180}
     cruel_mode = False
     line_width = 4
     font_size = 32
@@ -36,6 +36,14 @@ class Settings:
         cls.mini_font_size = max(1, int(cls.base_mini_font_size * scale))
         cls.big_font_size = max(1, int(cls.base_big_font_size * scale))
 
+    @classmethod
+    def swapmode(cls):
+        cls.cruel_mode = not cls.cruel_mode
+        cls.colors, cls.extra_colors = cls.extra_colors, cls.colors
+        SFX.swapmode()
+        IMG.swapmode()
+        MessageScreen.color = cls.colors['screen']
+        PlayWindow.button_color = tuple(map(lambda x: x - 30, cls.colors['screen']))
 class PlayWindow:
     window_side = Settings.width * 2 // 3
     window_x, window_y = (Settings.width - window_side) // 2, (Settings.height - window_side) // 2
@@ -49,14 +57,40 @@ class SFX:
     sound_volume = 1.0
     music_volume = 1.0
     all_sounds = {
-       'boom': Sound('sounds/boom.wav'),
+       'reset_flag': Sound('sounds/boom.wav'),
        'button': Sound('sounds/button.wav'),
-       'cat': Sound('sounds/cat.wav'),
-       'eagle': Sound('sounds/eagle.wav'),
-       'fart': Sound('sounds/fart.wav'),
+       'defeat': Sound('sounds/cat.wav'),
+       'flag': Sound('sounds/eagle.wav'),
+       'bomb': Sound('sounds/fart.wav'),
        'pause': Sound('sounds/pause.wav'),
-       'victory': Sound('sounds/victory.wav') 
+       'victory': Sound('sounds/victory.wav'),
+       'other_defeat': Sound('sounds/evil_laugh.wav'),
+       'other_victory': Sound('sounds/excuse_me_sir.wav'),
+       'other_flag': Sound('sounds/bark.wav'),
+       'other_reset_flag': Sound('sounds/bonk.wav'),
+       'other_bomb': Sound('sounds/fnaf.wav'),
     }
+    music = {
+        'main': 'music/meatball.wav',
+        'other_main': 'music/paranoid.wav',
+        'game': 'music/monkeys.wav',
+        'other_game': 'music/eateot.wav'
+             }
+    
+    @classmethod
+    def set_volume(cls, sound_volume=None):
+        for sound in cls.all_sounds.values():
+            sound.set_volume(sound_volume)
+            
+    @classmethod
+    def swapmode(cls):
+        cls.all_sounds['flag'], cls.all_sounds['other_flag'] = cls.all_sounds['other_flag'], cls.all_sounds['flag']
+        cls.all_sounds['bomb'], cls.all_sounds['other_bomb'] = cls.all_sounds['other_bomb'], cls.all_sounds['bomb']
+        cls.all_sounds['defeat'], cls.all_sounds['other_defeat'] = cls.all_sounds['other_defeat'], cls.all_sounds['defeat']
+        cls.all_sounds['victory'], cls.all_sounds['other_victory'] = cls.all_sounds['other_victory'], cls.all_sounds['victory']
+        cls.all_sounds['reset_flag'], cls.all_sounds['other_reset_flag'] = cls.all_sounds['other_reset_flag'], cls.all_sounds['reset_flag']
+        cls.music['main'], cls.music['other_main'] = cls.music['other_main'], cls.music['main']
+        cls.music['game'], cls.music['other_game'] = cls.music['other_game'], cls.music['game']
     
 class MessageScreen:
     rect = Settings.width // 4, Settings.height // 4, Settings.height * 2 // 3, Settings.height // 1.8
@@ -87,14 +121,21 @@ class IMG:
     music_off = load('assets/music_off.png')
     sound_off = load('assets/sound_off.png')
     
-    other_flag = None
-    other_bomb = None
-    other_defeat = None
-    other_victory = None
-    other_main = None
+    other_flag = load('assets/flag_bullterrier.png')
+    other_bomb = load('assets/trollface.png')
+    other_defeat = load('assets/holden.png')
+    other_victory = load('assets/butcher.png')
+    other_main = load('assets/main_cruel.png')
     
     @classmethod
     def picture(cls, img):
         return cls.__dict__[img].convert_alpha()
         
+    @classmethod
+    def swapmode(cls):
+        cls.flag, cls.other_flag = cls.other_flag, cls.flag
+        cls.bomb, cls.other_bomb = cls.other_bomb, cls.bomb
+        cls.defeat, cls.other_defeat = cls.other_defeat, cls.defeat
+        cls.victory, cls.other_victory = cls.other_victory, cls.victory
+        cls.main, cls.other_main = cls.other_main, cls.main
     

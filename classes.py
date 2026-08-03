@@ -126,13 +126,13 @@ class Game:
         self.game_field.field[x][y].has_flag = True
         self.__draw_cell(x, y)
         self.flags -= 1
-        sfx.all_sounds['eagle'].play()
+        sfx.all_sounds['flag'].play()
 
     def remove_flag(self, x, y):
         self.game_field.field[x][y].has_flag = False
         self.__draw_cell(x, y)
         self.flags += 1
-        sfx.all_sounds['boom'].play()
+        sfx.all_sounds['reset_flag'].play()
 
     def reset(self):
         self.game_field = Field(*self.dif)
@@ -152,7 +152,7 @@ class Game:
             if not self.game_field.field[i][j].has_flag:
                 self.game_field.field[i][j].is_opened = True
                 self.__draw_cell(i, j)
-                sfx.all_sounds['fart'].play()
+                sfx.all_sounds['bomb'].play()
                 pg.display.update()
                 pg.time.delay(delay_ms)
                 pg.event.pump()

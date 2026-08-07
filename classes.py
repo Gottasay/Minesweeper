@@ -13,31 +13,29 @@ class Cell:
         self.has_flag = has_flag
 
     def __repr__(self):
-        return f'{self.value}'
+        return f'{dict(value=self.value, is_opened=self.is_opened, has_flag=self.has_flag)}'
 
 
 class Field:
-    def __init__(self, size=9, mines=10):
+    def __init__(self, size=9, mines=10, field=None):
         self.size = size
-        self.field = [[Cell() for _ in range(size)] for _ in range(size)]
+        self.field = [[Cell() for _ in range(size)] for _ in range(size)] if not field else field
         self.mines = mines
 
-    # def show(self):
-    #     for stroke in self.field:
-    #         print(*stroke, sep=' | ')
-    #         print('-' * (self.size * 4 - 1))
+    def __repr__(self):
+        return f'{dict(field=self.field, size=self.size, mines=self.mines)}'
 
 
 class Game:
-    def __init__(self, dificulty):
-        self.dif = dificulty
-        self.game_field = Field(*dificulty)
-        self.flags = self.game_field.mines
-        self.opened_cells = 0
-        self.record = 0
+    def __init__(self, dificulty, game_field=None, current_record=0, opened_cells=0, flags=None, mine_places=None):
+        self.dif = s.field_params[dificulty]
+        self.game_field = Field(*self.dif) if game_field is None else game_field
+        self.flags = self.game_field.mines if flags is None else flags
+        self.opened_cells = opened_cells
+        self.record = current_record
         self.best_record = self.get_best_result()
         self.running = True
-        self.mine_places = set()
+        self.mine_places = set() if mine_places is None else mine_places
         self.expire_time = None
         
     def __mine_neighbours(self, x, y):
@@ -193,3 +191,4 @@ class Game:
             writer = csv.DictWriter(file, fieldnames=['difficulty', 'record'])
             writer.writeheader()
             writer.writerows(rows)
+            

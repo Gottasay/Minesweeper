@@ -2,6 +2,7 @@ from pygame import mixer, image
 from pygame.mixer import Sound
 from pygame.image import load
 
+
 mixer.init()
 class Settings:
     width = 800
@@ -138,4 +139,3 @@ class IMG:
         cls.defeat, cls.other_defeat = cls.other_defeat, cls.defeat
         cls.victory, cls.other_victory = cls.other_victory, cls.victory
         cls.main, cls.other_main = cls.other_main, cls.main
-    

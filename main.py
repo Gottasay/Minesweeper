@@ -1,5 +1,4 @@
-from classes import Game, Field
-from exceptions import *
+from backup import Backup
 from settings import Settings as s
 from settings import SFX as sfx
 from settings import MessageScreen as m
@@ -135,15 +134,15 @@ def choose_dificulty():
                 if is_button_pressed(mouse, easy_cords):
                     sfx.all_sounds['button'].play()
                     s.current_difficulty = 'easy'
-                    return s.field_params[s.current_difficulty]
+                    return
                 if is_button_pressed(mouse, medium_cords):
                     sfx.all_sounds['button'].play()
                     s.current_difficulty = 'medium'
-                    return s.field_params[s.current_difficulty]
+                    return
                 if is_button_pressed(mouse, hard_cords):
                     sfx.all_sounds['button'].play()
                     s.current_difficulty = 'hard'
-                    return s.field_params[s.current_difficulty]
+                    return
         
         pg.display.update()
 
@@ -204,6 +203,7 @@ def main_menu():
                     return choose_dificulty()
                 elif is_button_pressed(mouse, change_mode_cords):
                     s.swapmode()
+                    Backup.swapmode()
                     pg.mixer.music.load(sfx.music['main'])
                     pg.mixer.music.play(-1)
                     msg, other_msg = other_msg, msg
@@ -298,6 +298,8 @@ def stop_game(game, redraw, type=0, timer=None):
                 mouse = event.pos
                 if is_button_pressed(mouse, button_1_cords):
                     sfx.all_sounds['button'].play()
+                    if type != 0:
+                        Backup.save_backup(game)
                     main()
                 elif is_button_pressed(mouse, button_2_cords):
                     sfx.all_sounds['button'].play()
@@ -324,8 +326,8 @@ def main():
     pg.display.set_caption('Minesweeper')
     icon = img.picture('icon')
     pg.display.set_icon(icon)
-    dificulty = main_menu()
-    game = Game(dificulty)
+    main_menu()
+    game = Backup.get_backup()
     
     pause = img.picture('pause')
     pg.mixer.music.set_volume(sfx.music_volume)

@@ -3,6 +3,7 @@ from settings import Settings as s
 from settings import SFX as sfx
 from settings import PlayWindow as p
 from settings import IMG as img
+from time import time
 import pygame as pg
 import csv
 
@@ -27,7 +28,7 @@ class Field:
 
 
 class Game:
-    def __init__(self, dificulty, game_field=None, current_record=0, opened_cells=0, flags=None, mine_places=None):
+    def __init__(self, dificulty, game_field=None, current_record=0, opened_cells=0, flags=None, mine_places=None, expire_time=None):
         self.dif = s.field_params[dificulty]
         self.game_field = Field(*self.dif) if game_field is None else game_field
         self.flags = self.game_field.mines if flags is None else flags
@@ -36,7 +37,7 @@ class Game:
         self.best_record = self.get_best_result()
         self.running = True
         self.mine_places = set() if mine_places is None else mine_places
-        self.expire_time = None
+        self.expire_time = expire_time
         
     def __mine_neighbours(self, x, y):
         neighbours = [(x-1, y-1), (x-1, y), (x-1, y+1), (x, y-1),

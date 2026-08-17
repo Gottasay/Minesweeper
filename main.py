@@ -74,7 +74,7 @@ def game_parameters(redraw):
                 pg.quit()
             elif event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
-                    pg.quit()
+                    return
                 if event.key == pg.K_F11:
                     toggle_fullscreen(KF_11=True)
             if event.type == pg.MOUSEBUTTONDOWN:
@@ -166,16 +166,18 @@ def main_menu():
         mini_picture = pg.transform.scale(picture, picture_cords[2:])  
         settings = pg.transform.scale(img.picture('settings'), (p.button_size, p.button_size))
         s.screen.fill(s.colors['screen'])
-        s.screen.blit(msg_font.render(msg, True, s.colors['text']), msg_cords)
+        cur_game = msg if not s.cruel_mode else other_msg
+        s.screen.blit(msg_font.render(cur_game, True, s.colors['text']), msg_cords)
         s.screen.blit(mini_picture, picture_cords[:2])
         draw_text_button(
             s.screen, p.button_color, play_button_cords,
             border_radius=10, msg=play_msg, msg_color=s.colors['text'], msg_size=s.font_size, msg_orient='center', width=2,
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         )
+        next_mode = mode_msg if s.cruel_mode else other_mode_msg
         draw_text_button(
             s.screen, p.button_color, change_mode_cords,
-            border_radius=10, msg=mode_msg, msg_color=s.colors['text'], msg_size=s.font_size, msg_orient='center', width=2,
+            border_radius=10, msg=next_mode, msg_color=s.colors['text'], msg_size=s.font_size, msg_orient='center', width=2,
             line_color=tuple(map(lambda x: x - 30, p.button_color))
                         )
         draw_picture_button(
@@ -206,8 +208,6 @@ def main_menu():
                     Backup.swapmode()
                     pg.mixer.music.load(sfx.music['main'])
                     pg.mixer.music.play(-1)
-                    msg, other_msg = other_msg, msg
-                    mode_msg, other_mode_msg = other_mode_msg, mode_msg
                 elif is_button_pressed(mouse, p.settings_cords):
                     game_parameters(redraw)
                         
@@ -298,7 +298,10 @@ def stop_game(game, redraw, type=0, timer=None):
                 mouse = event.pos
                 if is_button_pressed(mouse, button_1_cords):
                     sfx.all_sounds['button'].play()
-                    if type != 0:
+                    if type == 2:
+                        Backup.save_backup(game, timer=timer)
+                    elif type == 1:
+                        game.reset()
                         Backup.save_backup(game)
                     main()
                 elif is_button_pressed(mouse, button_2_cords):
@@ -334,7 +337,7 @@ def main():
     sfx.set_volume(sound_volume=sfx.sound_volume)
     pg.mixer.music.load(sfx.music['game'])
     pg.mixer.music.play(-1)
-    if s.cruel_mode:
+    if s.cruel_mode and not game.expire_time:
         game.expire_time = time() + s.time_params[s.current_difficulty]
     
     def redraw():

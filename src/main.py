@@ -300,7 +300,7 @@ def stop_game(game, redraw, type=0, timer=None):
                     sfx.all_sounds['button'].play()
                     if type == 2:
                         Backup.save_backup(game, timer=timer)
-                    elif type == 1:
+                    else:
                         game.reset()
                         Backup.save_backup(game)
                     main()
